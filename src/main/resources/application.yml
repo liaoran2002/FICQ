@@ -1,0 +1,34 @@
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+  mvc:
+    servlet:
+      load-on-startup: 1
+
+server:
+  port: 8808
+
+#file:
+#  avatarPath: /avatars/
+#  staticAvatarPath: /avatars/**
+#  upAvatarFolder: D:/data/avatars/
+#  defaultAvatar: default.png
+#  imagePath: /image/
+#  staticImagePath: /image/**
+#  upImageFolder: D:/data/chat/image/
+#  videoPath: /video/
+#  staticVideoPath: /video/**
+#  upVideoFolder: D:/data/chat/video/
+
+#application.yml 是 Spring Boot 中用来配置应用程序的文件，其中包含了许多可用的选项：
+#服务器端口：server.port
+#应用程序上下文路径：server.servlet.context-path
+#数据库驱动、URL、用户名和密码：spring.datasource.driver-class-name、spring.datasource.url、spring.datasource.username 和 spring.datasource.password。
+#日志级别：logging.level.root（根日志级别）、logging.level.package_name（指定包名的日志级别）。
+#静态资源路径：spring.resources.static-locations
+#自定义属性的方法(自定义属性名称: 值)名称和值用‘: ’冒号空格分隔
+#application.yml需要注意缩进!!!
+#这只是一些常见的选项，当然还有更多的选项可以在 application.yml 文件中进行配置，具体要根据应用程序需要来决定。

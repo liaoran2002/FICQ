@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<script src="js/Jquery-V3.2.1.js"></script>
+		<link rel="stylesheet" href="css/hello.css">
+		<link rel="icon" href="http://192.168.12.240:8808/html/logo.png">
+	</head>
+	<body>
+		<div id="wel">
+			<div id="hed"></div>
+			<div id="login">
+				<div class="mytitle">
+					<h1 class="tt">新的一天从美妙的邂逅开始</h1>
+					<div class="ava">
+						<img src="img/hh.jpg" alt="">
+					</div>
+					<form id="logform">
+						<p class="input-container">
+							<input class="input-field" required placeholder="账号"
+								onfocus="$(this).attr('placeholder','账号');fin(this)"
+								onblur="$(this).attr('placeholder','请输入账号!');warnin(this)" type="text" name="username">
+							<label class="input-label">账号</label>
+						</p>
+						<p class="input-container">
+							<input class="input-field" required placeholder="密码"
+								onfocus="$(this).attr('placeholder','密码');fin(this)"
+								onblur="$(this).attr('placeholder','请输入密码!');warnin(this)" type="password"
+								name="password">
+							<label class="input-label">密码</label>
+						</p>
+						<span id="msg">&nbsp;</span>
+					</form><button class="but" onclick="login()"> 登录</button>
+				</div>
+			</div>
+			<div id="reg">
+				<div class="mytitle">
+					<h1 class="tt">欢迎你新来的旅客</h1>
+					<form action="" id="regform">
+
+						<div class="wave-group">
+							<input required type="text" name="username" class="input">
+							<span class="bar"></span>
+							<label class="label">
+								<span class="label-char" style="--index: 0">账</span>
+								<span class="label-char" style="--index: 1">号</span>
+							</label>
+						</div>
+						<div class="wave-group">
+							<input required type="password" name="password" class="input">
+							<span class="bar"></span>
+							<label class="label">
+								<span class="label-char" style="--index: 0">密</span>
+								<span class="label-char" style="--index: 1">码</span>
+							</label>
+						</div>
+						<div class="wave-group">
+							<input required type="password" name="repassword" class="input">
+							<span class="bar"></span>
+							<label class="label">
+								<span class="label-char" style="--index: 0">确</span>
+								<span class="label-char" style="--index: 1">认</span>
+								<span class="label-char" style="--index: 2">密</span>
+								<span class="label-char" style="--index: 3">码</span>
+							</label>
+						</div>
+					</form>
+					<span id="rmsg">&nbsp;</span>
+					<button class="but" onclick="reg()"> 注册</button>
+				</div>
+			</div>
+		</div>
+		<div id="cgbt">
+			<button class="bwt" onclick="loginshow()">登录
+				<span></span>
+			</button>
+			<button class="bwt" onclick="regshow()">注册
+				<span></span>
+			</button>
+		</div>
+
+		<script>
+			var tt_ss;
+			function loginshow(){
+				$("#login").css("display","block");
+				$("#reg").css("display","none");
+			}
+			function regshow(){
+				$("#login").css("display","none");
+				$("#reg").css("display","block");
+			}
+			function fin(ev) {
+				$(ev).attr('class', 'input-field finput');
+			
+			}
+
+			function warnin(ev) {
+				$(ev).attr('class', 'input-field warninput');
+			}
+
+			setInterval(function() {
+				if (tt_ss) {
+					$(".tt").css("box-shadow", "5px 5px 5px #84ebf4, 0 0 0 #84ebf4, 0 0 0 #84ebf4, 0 0 0 #84ebf4").css(
+						"color", "#00ffff");
+					tt_ss = false;
+				} else {
+					$(".tt").css("box-shadow", "").css("color", " #0000ff");
+					tt_ss = true;
+				}
+			}, 2000)
+
+			$(document).ready(function() {
+				$.get("http://192.168.12.240:8808/loginTest", function(res) {
+					console.log(res);
+				})
+			})
+
+			function login() {
+				$.get("http://192.168.12.240:8808/loginSer", $("#logform").serialize(), function(res) {
+					if (res.result_code) {
+						location.href = "main";
+					} else {
+						$("#msg").css("color", "red").html(res.message);
+					}
+				}, "json");
+			}
+
+			function reg() {
+			
+				$.get("http://192.168.12.240:8808/regSer", $("#regform").serialize(), function(res) {
+					if (res.result_code) {
+						$("#rmsg").css("color", "green");
+						alert(res.message);
+						// location.href = "index"
+					} else {
+						$("#rmsg").css("color", "red");
+					}
+					$("#rmsg").html(res.message)
+				}, "json");
+			}
+		</script>
+	</body>
+</html>

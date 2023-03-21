@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh">
+	<head>
+		<meta charset="utf-8">
+		<title>虚假的主页</title>
+	</head>
+	<body>
+		<script type="text/javascript" src="js/Jquery-V3.2.1.js"></script>
+		<script>
+			$(document).ready(function() {
+				$.get("loginSerC", function (res) {
+					if (res==="true") {
+						location.href = "main";
+					} else {
+						location.href="login";
+					}
+				});
+			})
+		</script>
+	</body>
+</html>

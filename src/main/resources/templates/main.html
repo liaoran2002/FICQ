@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>飞克尔</title>
+</head>
+<style>
+    #left {
+        float: left;
+        width: 30%;
+        height: 500px;
+        margin-left: 200px;
+    }
+
+    #right {
+        float: right;
+        width: 30%;
+        height: 500px;
+    }
+
+    #top {
+        margin-top: 50px;
+        float: top;
+        width: 30%;
+        height: 250px;
+    }
+
+    #content {
+        border: aquamarine 1px solid;
+        width: 100%;
+        height: 300px;
+    }
+
+    #input {
+        margin-top: 20px;
+        width: 100%;
+        height: 200px;
+    }
+
+    #input input {
+        width: 100%;
+        height: 100px;
+    }
+
+    #input button {
+        float: right;
+    }
+
+    #mes_left {
+        float: left;
+
+    }
+
+    #mes_right {
+        float: right;
+        width: 50%;
+        text-align: right;
+    }
+
+    #changeA {
+        display: none;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        z-index: 5;
+    }
+    .s_time{
+        font-size: 10px;
+        font-weight: 300;
+        margin-bottom: -8px;
+    }
+    .content{
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+</style>
+<body>
+<script src="js/Jquery-V3.2.1.js"></script>
+<div id="changeA">
+    <form id="upAvatarForm" method="post" enctype="multipart/form-data">
+        <input type="file" value="更换头像" id="upAvatar"/>
+        <input type="button" value="提交" id="changeAvatar">
+    </form>
+    <button onclick="$('#changeA').css('display','none')">关闭</button>
+</div>
+<img id="avatar" src="" onclick="$('#changeA').css('display','block')" title="点击更换头像" alt="点击更换头像">
+<h3 style="text-align: center" id="username"></h3>
+<div>
+    <div id="left">
+        <h4 id="new"></h4>
+        <div id="content">
+
+        </div>
+        <div id="input">
+            <input type="text" id="input_text">
+            <button id="submit">发送</button>
+        </div>
+    </div>
+    <div id="right">
+        <div id="top">
+            <p>在线的好友</p>
+            <div id="hylist">
+                <a href='javascript:showChat("群聊")'>群聊</a><br>
+            </div>
+        </div>
+        <div id="bottom">
+            <p>系统广播</p>
+            <div id="xtlist">
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    var defaulturl = location.href.substring(0, location.href.lastIndexOf("/"));
+    var defaultIP = location.href.split("/")[2]
+    var username;
+    var user_avatar;
+    $(function () {
+        var toName;
+        $.ajax({
+            url: "getUsername",
+            success: function (res) {
+                username = res;
+                if (username == null) {
+                    location.href = "login";
+                }
+                // $("#username").html("用户：123<span>在线</span>");
+            },
+            async: false //同步请求，只有上面好了才会接着下面
+        });
+        $.post({
+            url: "getAvatar",
+            data: {"username": username},
+            success: function (data) {
+                user_avatar = data;
+                $("#username").html("用户：" + username + "<span>在线</span><button onclick='exit()'>退出</button>");
+                $("#avatar").attr("src", defaulturl + user_avatar);
+            }
+        })
+        $("#changeAvatar").click(function () {
+            var file = $("#upAvatar")[0].files[0]; //获取上传的文件，uploadFile对应input框id
+            var formData = new FormData(); //新建一个formData对象,以表单的形式传参
+            formData.append("file", file);
+            $.ajax({
+                url: "/upAvatar",
+                type: "POST",
+                data: formData,
+                dataType: "json",
+                cache: false,
+                processData: false,//默认值: true。默认情况下，通过data选项传递进来的数据，如果是一个对象(技术上讲只要不是字符串)，都会处理转化成一个查询字符串，以配合默认内容类型 “application/x-www-form-urlencoded”。如果要发送 DOM 树信息或其它不希望转换的信息，请设置为 false
+                contentType: false,//避免 JQuery 对其操作，从而失去分界符，而使服务器不能正常解析文件
+                success(res) {
+                    if (res.result_code) {
+                        $("#changeA").css("display", "none");
+                        $("#avatar").attr("src", defaulturl + res.message);
+                        $("#upAvatar")[0].files[0] = "";//请求完清空表单上传文件内容
+                    } else {
+                        console.log(res);
+                    }
+                }
+            });
+        });
+
+        var ws = new WebSocket("ws://" + defaultIP + "/chat");
+        ws.onopen = function (ev) {
+            $("#username").html("用户：" + username + "<span>在线</span><button onclick='exit()'>退出</button>");
+        }
+        //接受消息
+        ws.onmessage = function (ev) {
+            var datastr = ev.data;
+            console.log(ev.data);
+            var res = JSON.parse(datastr);
+            //判断是否是系统消息
+            if (res.message) {
+                //好友列表
+                //系统广播
+                var names = res.message;
+                var userlistStr = "";
+                var broadcastListStr = "";
+                for (var name of names) {
+                    if (name !== username) {
+                        userlistStr += "<a href='javascript:showChat(\"" + name + "\")'>" + name + "</a><br>";
+                        broadcastListStr += "<p>" + name + "上线了</p>";
+                    }
+                }
+                ;
+                $("#hylist").html(userlistStr);
+                $("#xtlist").html(broadcastListStr);
+            } else {
+                //不是系统消息
+                var str = "<span id='mes_left' class='s_time'>" + res.send_time + "</span></br><span id='mes_left' class='content'> "+ res.content + "</span></br>";
+                if (toName === res.from_name) {
+                    $("#content").append(str);
+                }
+                var chatdata = sessionStorage.getItem(res.from_name);
+                if (chatdata != null) {
+                    str = chatdata + str;
+                }
+                sessionStorage.setItem(res.from_name, str);
+            }
+        }
+        ws.onclose = function (ev) {
+            $("#username").html("用户：" + username + "<span>离线</span>");
+            username = null;
+        }
+        exit=function (){
+            ws.onclose(username);
+            location.href = "login"
+        }
+        showChat=function (name) {
+            // alert("dsaad");
+            toName = name;
+            //清空聊天区
+            $("#content").html("");
+            $("#new").html("当前正与" + toName + "聊天");
+            var chatdata = sessionStorage.getItem(toName);
+            if (chatdata != null) {
+                $("#content").html(chatdata);
+            }
+        };
+        getTime=function (){
+            var time = new Date();
+            var h = time.getHours();
+            h = h < 10 ? '0' + h : h;
+            var m = time.getMinutes();
+            m = m < 10 ? '0' + m : m;
+            var s = time.getSeconds();
+            s = s < 10 ? '0' + s : s;
+            return time.getFullYear()+"-"+(time.getMonth()+1)+"-"+time.getDate()+" "+h + ':' + m + ':' + s;
+        }
+        //发送消息
+        $("#submit").click(function () {
+            //获取输入的内容
+            var data = $("#input_text").val();
+            $("#input_text").val("");
+            var json = {
+                "from_name": username,
+                "to_name": toName,
+                "type": "chat",
+                "content": data
+            };
+            //将数据展示在聊天区
+            var str = "<span id='mes_right' class='s_time'>" + getTime() + "</span></br><span id='mes_right' class='content'>" + data + "</span></br>";
+            $("#content").append(str);
+
+            var chatdata = sessionStorage.getItem(toName);
+            if (chatdata != null) {
+                str = chatdata + str;
+            }
+            sessionStorage.setItem(toName, str);
+            //发送数据
+            ws.send(JSON.stringify(json));
+        })
+    })
+</script>
+</body>
+</html>

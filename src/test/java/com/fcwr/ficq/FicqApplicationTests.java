@@ -1,0 +1,13 @@
+package com.fcwr.ficq;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class FicqApplicationTests {
+
+    @Test
+    void contextLoads() {
+    }
+
+}
