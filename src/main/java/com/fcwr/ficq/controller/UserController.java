@@ -22,14 +22,15 @@ import java.util.UUID;
 
 @RestController
 public class UserController {
-    private final String usernameC=Base64Utils.encode("username").replace("=","");
-    private final String passwordC=Base64Utils.encode("password").replace("=","");
+    private final String usernameC = Base64Utils.encode("username").replace("=", "");
+    private final String passwordC = Base64Utils.encode("password").replace("=", "");
+
     @RequestMapping("/loginSerC")
     public String loginSerC(HttpSession session, HttpServletRequest request) {
         String username = usernameC;
         String password = passwordC;
         Cookie[] cookies = request.getCookies();
-        if (cookies==null){
+        if (cookies == null) {
             return "false";
         }
         for (Cookie cookie : cookies) {
@@ -51,31 +52,32 @@ public class UserController {
 
     @RequestMapping("/loginSer")
     public String loginSer(@RequestParam("username") String username, @RequestParam("password") String
-            password, HttpSession session, HttpServletResponse response) {
-        Result result = new Result();
+            password, @RequestParam("remember") String remember, HttpSession session, HttpServletResponse response) {
+        Result result = new Result(false, "出现错误,请重试");
         ObjectMapper mapper = new ObjectMapper();
-        String s = "{'message':'出现错误,请重试','result_code':false}";
         User user = UserDao.queryByName(username);
+        String s = "{'result_code':false,'message':'出现错误,请重试'}";
         try {
             if (username.equals("") || password.equals("")) {
                 result.setMessage("用户名或密码不能为空");
-                result.setResult_code(false);
+            } else if (username.equals("群聊")) {
+                result.setMessage("群聊账号禁止登陆");
             } else if (user == null) {
                 result.setMessage("用户名不存在");
-                result.setResult_code(false);
             } else if (user.getPassword().equals(password)) {
                 session.setAttribute("user", username);
                 result.setMessage("登录成功");
                 result.setResult_code(true);
-                Cookie usernameCookie = new Cookie(usernameC, Base64Utils.encode(username));
-                Cookie passwordCookie = new Cookie(passwordC, Base64Utils.encode(password));
-                usernameCookie.setMaxAge(60 * 60 * 72);
-                passwordCookie.setMaxAge(60 * 60 * 72);
-                response.addCookie(usernameCookie);
-                response.addCookie(passwordCookie);
+                if (remember.split(",")[1].equals("me")) {
+                    Cookie usernameCookie = new Cookie(usernameC, Base64Utils.encode(username));
+                    Cookie passwordCookie = new Cookie(passwordC, Base64Utils.encode(password));
+                    usernameCookie.setMaxAge(60 * 60 * 72);
+                    passwordCookie.setMaxAge(60 * 60 * 72);
+                    response.addCookie(usernameCookie);
+                    response.addCookie(passwordCookie);
+                }
             } else {
                 result.setMessage("用户名或密码错误");
-                result.setResult_code(false);
             }
             s = mapper.writeValueAsString(result);
         } catch (Exception e) {
@@ -97,11 +99,11 @@ public class UserController {
 
 
     @RequestMapping("/regSer")
-    public String regSer(@RequestParam("username") String username,@RequestParam("password") String password,@RequestParam("repassword") String repassword, HttpSession session,HttpServletResponse response) {
+    public String regSer(@RequestParam("username") String username, @RequestParam("password") String password, @RequestParam("repassword") String repassword, HttpSession session, HttpServletResponse response) {
         Result result = new Result();
         ObjectMapper mapper = new ObjectMapper();
         String s = "{'message':'出现错误,请重试','result_code':false}";
-        if (!password.equals(repassword)){
+        if (!password.equals(repassword)) {
             return "{'message':'两次输入的密码不相同','result_code':false}";
         }
         User user = UserDao.queryByName(username);
@@ -117,12 +119,6 @@ public class UserController {
                 session.setAttribute("user", username);
                 result.setMessage("注册成功");
                 result.setResult_code(true);
-                Cookie usernameCookie = new Cookie(usernameC, Base64Utils.encode(username));
-                Cookie passwordCookie = new Cookie(passwordC, Base64Utils.encode(password));
-                usernameCookie.setMaxAge(60 * 60 * 72);
-                passwordCookie.setMaxAge(60 * 60 * 72);
-                response.addCookie(usernameCookie);
-                response.addCookie(passwordCookie);
             }
             s = mapper.writeValueAsString(result);
         } catch (Exception e) {

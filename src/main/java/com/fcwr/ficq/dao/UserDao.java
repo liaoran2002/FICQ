@@ -28,6 +28,10 @@ public class UserDao {
         if (checkName(username)) return null;
         return jdbcTemplate.update("update user set login_status=0 where username=?",username)>0;
     }
+    public static void updateAdmin(String username){
+        if (checkName(username)) return;
+        jdbcTemplate.update("update user set admin=1 where username=?", username);
+    }
     public static Boolean updatePassword(String username,String password){
         if (checkName(username)) return null;
         return jdbcTemplate.update("update user set password=? where username=?",password,username)>0;

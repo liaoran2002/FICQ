@@ -5,7 +5,7 @@
 		<title></title>
 		<script src="js/Jquery-V3.2.1.js"></script>
 		<link rel="stylesheet" href="css/hello.css">
-		<link rel="icon" href="http://192.168.12.240:8808/html/logo.png">
+		<link rel="icon" href="./html/logo.png">
 	</head>
 	<body>
 		<div id="wel">
@@ -30,6 +30,10 @@
 								name="password">
 							<label class="input-label">密码</label>
 						</p>
+						<input type="hidden" name="remember" value="you">
+						<input type="checkbox" id="remember" name="remember" value="me"><label>自动登录</label>
+						<input type="hidden" name="remember" value="you">
+						<input type="checkbox" name="remembe" value="me"><label>记住密码</label>
 						<span id="msg">&nbsp;</span>
 					</form><button class="but" onclick="login()"> 登录</button>
 				</div>
@@ -38,7 +42,6 @@
 				<div class="mytitle">
 					<h1 class="tt">欢迎你新来的旅客</h1>
 					<form action="" id="regform">
-
 						<div class="wave-group">
 							<input required type="text" name="username" class="input">
 							<span class="bar"></span>
@@ -111,13 +114,13 @@
 			}, 2000)
 
 			$(document).ready(function() {
-				$.get("http://192.168.12.240:8808/loginTest", function(res) {
+				$.get("loginTest", function(res) {
 					console.log(res);
 				})
 			})
 
 			function login() {
-				$.get("http://192.168.12.240:8808/loginSer", $("#logform").serialize(), function(res) {
+				$.get("loginSer", $("#logform").serialize(), function(res) {
 					if (res.result_code) {
 						location.href = "main";
 					} else {
@@ -127,8 +130,7 @@
 			}
 
 			function reg() {
-			
-				$.get("http://192.168.12.240:8808/regSer", $("#regform").serialize(), function(res) {
+				$.get("regSer", $("#regform").serialize(), function(res) {
 					if (res.result_code) {
 						$("#rmsg").css("color", "green");
 						alert(res.message);

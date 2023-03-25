@@ -16,8 +16,9 @@ public class User implements Serializable {
     private String avatar_path;
 
     private Boolean login_status;
+    private Boolean admin;
 
-    public User(Integer id, String username, String password, String reg_date, String last_login_date, String avatar_path, Boolean login_status) {
+    public User(Integer id, String username, String password, String reg_date, String last_login_date, String avatar_path, Boolean login_status, Boolean admin) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -25,7 +26,9 @@ public class User implements Serializable {
         this.last_login_date = last_login_date;
         this.avatar_path = avatar_path;
         this.login_status = login_status;
+        this.admin = admin;
     }
+
     public User() {
     }
 

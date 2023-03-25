@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class OtherController {
     @RequestMapping("/logo")
-    @ResponseBody
     public String logo() {
         return "/html/logo.png";
     }
@@ -58,10 +57,10 @@ public class OtherController {
         return "login";
     }
 
-    @RequestMapping("/register")
-    public String register() {
-        return "register";
-    }
+//    @RequestMapping("/register")
+//    public String register() {
+//        return "register";
+//    }
 
     @RequestMapping("/main")
     public String main() {

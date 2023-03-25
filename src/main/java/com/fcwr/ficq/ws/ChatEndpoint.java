@@ -42,6 +42,14 @@ public class ChatEndpoint {
             }
             return;
         }
+        if (onlineUsers.get(this.username)!=null){
+            try {
+                onlineUsers.get(this.username).session.close();
+                onlineUsers.remove(this.username);
+            }catch (Exception e){
+                return;
+            }
+        }
         UserDao.updateLogin(this.username);
         onlineUsers.put(this.username, this);
         String resultMessage = MessageUtils.getResultMessage(getNames());

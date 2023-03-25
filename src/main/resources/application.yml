@@ -10,7 +10,11 @@ spring:
 
 server:
   port: 8808
-
+  error:
+    path: /error
+logging:
+  level:
+    web: ERROR
 #file:
 #  avatarPath: /avatars/
 #  staticAvatarPath: /avatars/**
