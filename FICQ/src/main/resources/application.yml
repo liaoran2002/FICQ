@@ -1,0 +1,84 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/ficq?serverTimezone=GMT&useSSL=false&useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: 1
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    druid:
+      max-active: 10
+      initial-size: 5
+      max-wait: 3000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validation-query: SELECT 1
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+    type: com.alibaba.druid.pool.DruidDataSource
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+  mvc:
+    servlet:
+      load-on-startup: 1
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+websocket:
+  enable: true
+  port: 8878
+
+server:
+  port: 8808
+  error:
+    path: /error
+  servlet:
+    session:
+      cookie:
+        secure: false
+
+logging:
+  level:
+    root: INFO
+    org.lc.ficq: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: ERROR
+
+jwt:
+  accessToken:
+    expireIn: 1800 #半个小时
+    secret: MIIBIjANBgkq
+  refreshToken:
+    expireIn: 604800 #7天
+    secret: IKDiqVmn0VFU
+
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: AUTO # ID自增
+  configuration:
+    map-underscore-to-camel-case: true  #开启自动驼峰命名规则
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+file:
+  baseUploadDir: D:/data/ficq/
+  staticAvatarPath: /avatars/**
+  upAvatarFolder: D:/data/avatars/
+  chatPath: /chat/
+  staticChatPath: /chat/**
+  upChatFolder: D:/data/chat/
+  htmlPath: /html/
+  staticHtmlPath: /html/**
+  upHtmlFolder: D:/data/html/
+
+#application.yml 是 Spring Boot 中用来配置应用程序的文件，其中包含了许多可用的选项：
+#服务器端口：server.port
+#应用程序上下文路径：server.servlet.context-path
+#数据库驱动、URL、用户名和密码：spring.datasource.driver-class-name、spring.datasource.url、spring.datasource.username 和 spring.datasource.password。
+#日志级别：logging.level.root（根日志级别）、logging.level.package_name（指定包名的日志级别）。
+#静态资源路径：spring.resources.static-locations
+#自定义属性的方法(自定义属性名称: 值)名称和值用‘: ’冒号空格分隔
+#application.yml需要注意缩进!!!
+#这只是一些常见的选项，当然还有更多的选项可以在 application.yml 文件中进行配置，具体要根据应用程序需要来决定。
