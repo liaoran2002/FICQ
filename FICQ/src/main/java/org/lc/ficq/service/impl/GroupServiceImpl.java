@@ -5,10 +5,12 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.lc.ficq.contant.Constant;
+import org.lc.ficq.dto.PageQueryDTO;
 import org.lc.ficq.entity.*;
 import org.lc.ficq.enums.MessageStatus;
 import org.lc.ficq.enums.MessageType;
@@ -25,10 +27,7 @@ import org.lc.ficq.service.UserService;
 import org.lc.ficq.session.SessionContext;
 import org.lc.ficq.session.UserSession;
 import org.lc.ficq.util.CommaTextUtils;
-import org.lc.ficq.vo.GroupInviteVO;
-import org.lc.ficq.vo.GroupMemberVO;
-import org.lc.ficq.vo.GroupMessageVO;
-import org.lc.ficq.vo.GroupVO;
+import org.lc.ficq.vo.*;
 import org.lc.ficq.util.BeanUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.springframework.stereotype.Service;
@@ -356,5 +355,23 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, Group> implements
         sendMessage.setSendResult(false);
         sendMessage.setSendToSelf(sendToSelf);
         webSocketMessageService.sendGroupMessage(sendMessage);
+    }
+
+    @Override
+    public ListResultVO<GroupVO> findGroupList(PageQueryDTO dto) {
+        UserSession session = SessionContext.getSession();
+        if (userService.findUserById(session.getUserId()).getType()!=0){
+            throw new GlobalException("不是管理账户，禁止查询!");
+        }
+        if(dto.getBanned()==null){
+            throw new GlobalException("封禁状态未添加!");
+        }
+        LambdaQueryWrapper<Group> queryWrapper = new LambdaQueryWrapper<>();
+        List<Group> groups = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()), queryWrapper.eq(Group::getIsBanned,dto.getBanned())).getRecords();
+        long count= this.count(queryWrapper);
+        ListResultVO<GroupVO> result = new ListResultVO<>();
+        result.setList(groups.stream().map(group -> BeanUtils.copyProperties(group,GroupVO.class)).collect(Collectors.toList()));
+        result.setTotal(count);
+        return result;
     }
 }

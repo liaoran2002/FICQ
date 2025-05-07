@@ -30,7 +30,7 @@
 						</div>
 					</div>
 					<div class="botoom">
-						<div v-if="$store.state.userStore.userInfo.type===2" class="botoom-item" @click="goToAdmin">
+						<div v-if="$store.state.userStore.userInfo.type===0" class="botoom-item" @click="goToAdmin">
 							<i class="icon iconfont icon-minganciciku"></i>
 						</div>
 						<div class="botoom-item" @click="isFullscreen = !isFullscreen">

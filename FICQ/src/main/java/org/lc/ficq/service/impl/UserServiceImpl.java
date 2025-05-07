@@ -4,13 +4,14 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fasterxml.jackson.core.io.UTF32Reader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.lc.ficq.config.props.JwtProperties;
 import org.lc.ficq.dto.LoginDTO;
 import org.lc.ficq.dto.ModifyPwdDTO;
+import org.lc.ficq.dto.PageQueryDTO;
 import org.lc.ficq.dto.RegisterDTO;
 import org.lc.ficq.entity.Friend;
 import org.lc.ficq.entity.GroupMember;
@@ -27,6 +28,7 @@ import org.lc.ficq.session.SessionContext;
 import org.lc.ficq.session.UserSession;
 import org.lc.ficq.util.BeanUtils;
 import org.lc.ficq.util.JwtUtil;
+import org.lc.ficq.vo.ListResultVO;
 import org.lc.ficq.vo.LoginVO;
 import org.lc.ficq.vo.OnlineTerminalVO;
 import org.lc.ficq.vo.UserVO;
@@ -82,6 +84,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         vo.setAccessTokenExpiresIn(jwtProperties.getAccessTokenExpireIn());
         vo.setRefreshToken(refreshToken);
         vo.setRefreshTokenExpiresIn(jwtProperties.getRefreshTokenExpireIn());
+        user.setLastLoginTime(new Date());
+        this.updateById(user);
         return vo;
     }
 
@@ -225,21 +229,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public List<UserVO> findUserList() {
+    public ListResultVO<UserVO> findUserList(PageQueryDTO dto) {
         UserSession session = SessionContext.getSession();
-        if (this.findUserById(session.getUserId()).getType()!=2){
+        if (this.findUserById(session.getUserId()).getType()!=0){
             throw new GlobalException("不是管理账户，禁止查询!");
         }
+        if(dto.getBanned()==null){
+            throw new GlobalException("封禁状态未添加!");
+        }
         LambdaQueryWrapper<User> queryWrapper = Wrappers.lambdaQuery();
-        queryWrapper.eq(User::getIsBanned,false);
-        List<User> users=this.list(queryWrapper);
-        return users.stream().map(user -> {
+        List<User> users=this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),queryWrapper.eq(User::getIsBanned,dto.getBanned())).getRecords();
+        long count = this.count(queryWrapper);
+        ListResultVO<UserVO> result = new ListResultVO<>();
+        result.setList(users.stream().map(user -> {
             UserVO vo = BeanUtils.copyProperties(user,UserVO.class);
             if (vo!=null){
                 vo.setOnline(webSocketMessageService.isOnline(user.getId()));
                 return vo;
             }else
                 throw new GlobalException("用户信息转换失败!");
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toList()));
+        result.setTotal(count);
+        return result;
     }
 }

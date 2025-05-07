@@ -11,36 +11,16 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.icon-invite-rtc:before {
-  content: "\e65f";
-}
-
 .icon-quit:before {
   content: "\e606";
-}
-
-.icon-camera-off:before {
-  content: "\e6b5";
 }
 
 .icon-speaker-off:before {
   content: "\ea3c";
 }
 
-.icon-microphone-on:before {
-  content: "\e63b";
-}
-
 .icon-speaker-on:before {
   content: "\e6a4";
-}
-
-.icon-camera-on:before {
-  content: "\e627";
-}
-
-.icon-microphone-off:before {
-  content: "\efe5";
 }
 
 .icon-chat:before {
@@ -57,14 +37,6 @@
 
 .icon-exit:before {
   content: "\e9e4";
-}
-
-.icon-chat-video:before {
-  content: "\e73b";
-}
-
-.icon-chat-voice:before {
-  content: "\e633";
 }
 
 .icon-ok:before {
@@ -109,4 +81,12 @@
 
 .icon-caidan:before {
   content: "\e62c";
+}
+
+.icon-xiangyoujiantou:before {
+  content: "\e65f";
+}
+
+.icon-xiangzuojiantou:before {
+  content: "\e660";
 }

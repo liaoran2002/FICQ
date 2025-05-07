@@ -23,15 +23,13 @@ public class LoginController {
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "用户登录")
     public Result<LoginVO> login(@Valid @RequestBody LoginDTO dto) {
-        LoginVO vo = userService.login(dto);
-        return ResultUtils.success(vo);
+        return ResultUtils.success(userService.login(dto));
     }
 
     @PutMapping("/refreshToken")
     @Operation(summary = "刷新token", description = "用refreshtoken换取新的token")
-    public Result refreshToken(@RequestHeader("refreshToken") String refreshToken) {
-        LoginVO vo = userService.refreshToken(refreshToken);
-        return ResultUtils.success(vo);
+    public Result<LoginVO> refreshToken(@RequestHeader("refreshToken") String refreshToken) {
+        return ResultUtils.success(userService.refreshToken(refreshToken));
     }
 
     @PostMapping("/register")

@@ -32,14 +32,14 @@ export default {
 .box {
 	height: 100%;
 	width: 100%;
-	overflow: scroll;
+	overflow-y: auto;
 }
 
 .box .title {
-	height: 3%;
+	height: 35px;
 	width: 100%;
-	padding: 2vh 2vw;
-	width: 100%;
+	line-height: 35px;
+	padding-left: 15px;
 	background-color: #ffffff;
 }
 
@@ -48,7 +48,7 @@ export default {
 }
 
 .box .main {
-	height: 97%;
+	min-height: calc(100% - 35px);
 	width: 100%;
 	background-color: #f0f0f0;
 }

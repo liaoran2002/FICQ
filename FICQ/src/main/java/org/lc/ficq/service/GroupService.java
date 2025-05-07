@@ -1,10 +1,10 @@
 package org.lc.ficq.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import jakarta.validation.Valid;
+import org.lc.ficq.dto.PageQueryDTO;
 import org.lc.ficq.entity.Group;
-import org.lc.ficq.vo.GroupInviteVO;
-import org.lc.ficq.vo.GroupMemberVO;
-import org.lc.ficq.vo.GroupVO;
+import org.lc.ficq.vo.*;
 
 
 import java.util.List;
@@ -86,4 +86,6 @@ public interface GroupService extends IService<Group> {
      * @return List<GroupMemberVO>
      **/
     List<GroupMemberVO> findGroupMembers(Long groupId);
+
+    ListResultVO<GroupVO> findGroupList(@Valid PageQueryDTO dto);
 }

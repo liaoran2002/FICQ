@@ -3,8 +3,10 @@ package org.lc.ficq.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.lc.ficq.dto.LoginDTO;
 import org.lc.ficq.dto.ModifyPwdDTO;
+import org.lc.ficq.dto.PageQueryDTO;
 import org.lc.ficq.dto.RegisterDTO;
 import org.lc.ficq.entity.User;
+import org.lc.ficq.vo.ListResultVO;
 import org.lc.ficq.vo.LoginVO;
 import org.lc.ficq.vo.OnlineTerminalVO;
 import org.lc.ficq.vo.UserVO;
@@ -84,5 +86,5 @@ public interface UserService extends IService<User> {
     List<OnlineTerminalVO> getOnlineTerminals(String userIds);
 
 
-    List<UserVO> findUserList();
+    ListResultVO<UserVO> findUserList(PageQueryDTO dto);
 }

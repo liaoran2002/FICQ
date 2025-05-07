@@ -57,7 +57,7 @@ export default new VueRouter({
 					path: "/adminHome/userList",
 					component: () => import("../view/admin/userList"),
 					props: {
-						isBanned: false
+						banned: false
 					}
 				},
 				{
@@ -65,7 +65,7 @@ export default new VueRouter({
 					path: "/adminHome/bannedUserList",
 					component: () => import("../view/admin/userList"),
 					props: {
-						isBanned: true
+						banned: true
 					}
 				},
 				{
@@ -73,7 +73,7 @@ export default new VueRouter({
 					path: "/adminHome/groupList",
 					component: () => import("../view/admin/groupList"),
 					props: {
-						isBanned: false
+						banned: false
 					}
 				},
 				{
@@ -81,7 +81,7 @@ export default new VueRouter({
 					path: "/adminHome/bannedGroupList",
 					component: () => import("../view/admin/groupList"),
 					props: {
-						isBanned: true
+						banned: true
 					}
 				},
 				{

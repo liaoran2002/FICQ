@@ -15,9 +15,8 @@
 					<span>飞克尔后台管理系统</span>
 				</div>
 				<div class="t-right">
-					<head-image :name="$store.state.userStore.userInfo.nickName" :size="38"
-								:url="$store.state.userStore.userInfo.headImageThumb">
-							</head-image>
+					<HeadImage :name="$store.state.userStore.userInfo.nickName" :size="38"
+								:url="$store.state.userStore.userInfo.headImageThumb"></HeadImage>
 					<span>{{ $store.state.userStore.userInfo.nickName }}</span>
 					<span class="icon iconfont icon-exit" @click="logout"></span>
 				</div>
@@ -58,6 +57,7 @@
 
 <script>
 import HeadImage from '../components/common/HeadImage.vue';
+
 import {
 	RouterLink
 } from 'vue-router';
@@ -178,6 +178,9 @@ export default {
 </script>
 
 <style scoped lang="scss">
+*{
+	user-select: none;
+}
 a {
 	color: #000;
 	text-decoration: none;
@@ -298,7 +301,7 @@ a {
 	flex: 0 0 auto;
 	height: 90vh;
 	width: 16vw;
-	overflow-y: scroll;
+	overflow-y: auto;
 	cursor: pointer;
 	border-right: 3px solid #888;
 	transition: all 0.5s ease;
