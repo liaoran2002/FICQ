@@ -12,7 +12,7 @@
                     @current-change="handlePageChange" @size-change="handleSizeChange" />
             </div>
         </div>
-        <div class="userList">
+        <div class="dataList">
             <table class="list">
                 <thead>
                     <tr>
@@ -29,6 +29,17 @@
                             <!-- 根据不同的表头类型渲染不同内容 -->
                             <template v-if="header.type === 'image'">
                                 <HeadImage :name="item[header.field]" :size="30" :url="item[header.urlField]"></HeadImage>
+                            </template>
+                            <template v-else-if="header.type === 'date'">
+                                {{ formatTime(item[header.field]) }}
+                            </template>
+                            <template v-else-if="header.field==='sex'">
+                                <span v-if="item[header.field]===0">男</span>
+                                <span v-else>女</span>
+                            </template>
+                            <template v-else-if="header.field==='type'">
+                                <span v-if="item[header.field]===0">管理员</span>
+                                <span v-else>普通用户</span>
                             </template>
                             <template v-else-if="header.type === 'buttonGroup'">
                                 <button @click="modify(item.id)">修改</button>
@@ -148,7 +159,35 @@ export default {
         },
         unbanUser(id) {
             // 实现解封用户逻辑
-        }
+        },
+        formatTime(timestamp) {
+            console.log(timestamp);
+            const now = new Date();
+            const targetDate = new Date(timestamp);
+            const diff = now - targetDate;
+            const year = 365 * 24 * 60 * 60 * 1000;
+            const month = 30 * 24 * 60 * 60 * 1000;
+            const day = 24 * 60 * 60 * 1000;
+            const hour = 60 * 60 * 1000;
+            const minute = 60 * 1000;
+            const second = 1000;
+
+            if (diff >= year) {
+                return `${Math.floor(diff / year)}年前`;
+            } else if (diff >= month) {
+                return `${Math.floor(diff / month)}月前`;
+            } else if (diff >= day) {
+                return `${Math.floor(diff / day)}天前`;
+            } else if (diff >= hour) {
+                return `${Math.floor(diff / hour)}小时前`;
+            } else if (diff >= minute) {
+                return `${Math.floor(diff / minute)}分钟前`;
+            } else if (diff >= second) {
+                return `${Math.floor(diff / second)}秒前`;
+            } else {
+                return '刚刚';
+            }
+        },
     },
     mounted() {
         this.init();
@@ -192,7 +231,7 @@ export default {
     color: blue;
 }
 
-.userList {
+.dataList {
     width: 95%;
     margin: 0 auto;
     background-color: #fff;
@@ -211,9 +250,8 @@ export default {
 }
 
 .list .head-image {
-    height: 30px;
-    width: 30px;
-    position: relative;
-    left: 2vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>

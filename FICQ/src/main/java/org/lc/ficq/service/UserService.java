@@ -77,6 +77,8 @@ public interface UserService extends IService<User> {
      */
     List<UserVO> findUserByName(String name);
 
+    List<UserVO> randUsers(int count);
+
     /**
      * 获取用户在线的终端类型
      *

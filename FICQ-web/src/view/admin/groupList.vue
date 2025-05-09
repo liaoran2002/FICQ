@@ -30,7 +30,7 @@ export default {
                 { label: 'ID', field: 'id' },
                 { label: '群聊名称', field: 'name' },
                 { label: '群聊头像', field: 'name', urlField: 'headImageThumb', type: 'image' },
-                { label: '群聊状态', field: 'status', elseField:'reason', type: 'conditional', conditional: '!banned' },
+                { label: '群公告', field: 'notice' },
                 { label: '封禁原因', field:'reason', conditional: 'banned' },
                 { label: '操作', type: 'buttonGroup' }
             ]

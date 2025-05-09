@@ -27,7 +27,7 @@ public class UserVO {
     @Schema(description = "性别")
     private Integer sex;
 
-    @Schema(description = "用户类型 1:普通用户 2:审核账户")
+    @Schema(description = "用户类型 1:普通用户 0:管理员")
     private Integer type;
 
     @Length(max = 128, message = "个性签名不能大于128个字符")

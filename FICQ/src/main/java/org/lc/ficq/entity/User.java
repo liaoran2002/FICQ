@@ -75,7 +75,7 @@ public class User {
     private Date createdTime;
 
     /**
-     *  账号类型 1:普通用户 2:wx小程序审核账户
+     *  账号类型 1:普通用户 0:管理员
      */
     private Integer type;
 

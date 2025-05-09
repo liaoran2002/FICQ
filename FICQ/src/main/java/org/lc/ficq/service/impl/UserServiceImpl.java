@@ -28,10 +28,7 @@ import org.lc.ficq.session.SessionContext;
 import org.lc.ficq.session.UserSession;
 import org.lc.ficq.util.BeanUtils;
 import org.lc.ficq.util.JwtUtil;
-import org.lc.ficq.vo.ListResultVO;
-import org.lc.ficq.vo.LoginVO;
-import org.lc.ficq.vo.OnlineTerminalVO;
-import org.lc.ficq.vo.UserVO;
+import org.lc.ficq.vo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -212,6 +209,45 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
             return vo;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserVO> randUsers(int count) {
+        List<Long> friendIds = friendService.findFriends().stream().map(FriendVO::getId).toList();
+        LambdaQueryWrapper<User> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(User::getIsBanned, false);
+        queryWrapper.ne(User::getId, SessionContext.getSession().getUserId());
+        if (!friendIds.isEmpty()) {
+            queryWrapper.notIn(User::getId, friendIds);
+        }
+        List<User> allNonFriendUsers = this.list(queryWrapper);
+        if (allNonFriendUsers.size() < count) {
+            return allNonFriendUsers.stream().map(user -> BeanUtils.copyProperties(user, UserVO.class)).collect(Collectors.toList());
+        }
+        //优先推荐在线用户
+        List<Long> onlineUserIds = webSocketMessageService.getOnlineUser(allNonFriendUsers.stream().map(User::getId).collect(Collectors.toList()));
+        List<User> onlineUsers = allNonFriendUsers.stream().filter(user -> onlineUserIds.contains(user.getId())).toList();
+        if (onlineUsers.size() >= count) {
+            return onlineUsers.stream().skip((int) (Math.random() * (onlineUsers.size() - count))).limit(count).map(user -> {
+                UserVO vo = BeanUtils.copyProperties(user, UserVO.class);
+                if (vo != null) {
+                    vo.setOnline(true);
+                }
+                return vo;
+            }).collect(Collectors.toList());
+        } else if (!onlineUsers.isEmpty()) {
+            List<UserVO> userVOS = new ArrayList<>(onlineUsers.stream().map(user -> {
+                UserVO vo = BeanUtils.copyProperties(user, UserVO.class);
+                if (vo != null) {
+                    vo.setOnline(true);
+                }
+                return vo;
+            }).toList());
+            count -= userVOS.size();
+            userVOS.addAll(allNonFriendUsers.stream().skip((int) (Math.random() * (allNonFriendUsers.size() - count))).limit(count).map(user -> BeanUtils.copyProperties(user, UserVO.class)).toList());
+            return userVOS;
+        }else
+            return allNonFriendUsers.stream().skip((int) (Math.random() * (allNonFriendUsers.size() - count))).limit(count).map(user -> BeanUtils.copyProperties(user, UserVO.class)).collect(Collectors.toList());
     }
 
     @Override

@@ -61,5 +61,12 @@ public class UserController {
     public Result<List<UserVO>> findByName(@RequestParam String name) {
         return ResultUtils.success(userService.findUserByName(name));
     }
+
+    @GetMapping("/randUsers")
+    @Operation(summary = "随机获取用户", description = "随机获取用户")
+    public Result<List<UserVO>> randUsers(@RequestParam int count) {
+        return ResultUtils.success(userService.randUsers(count));
+    }
+
 }
 

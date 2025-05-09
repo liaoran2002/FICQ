@@ -424,9 +424,6 @@ export default {
 	},
 	unmounted() {
 		this.$wsApi.close();
-	},
-	beforeRouteUpdate() {
-		this.init();
 	}
 }
 </script>

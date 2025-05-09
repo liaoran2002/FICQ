@@ -35,7 +35,7 @@ export default {
                 { label: '性别', field: 'sex', formatter: (value) => value === 0 ? "男" : "女" },
                 { label: '身份', field: 'type', formatter: (value) => value === 0 ? "管理员" : "普通用户" },
                 { label: '在线状态', field: 'online', elseField: 'reason', type: 'conditional', conditional: '!banned' },
-                { label: '封禁原因', field: 'reason', conditional: 'banned' },
+				{ label: '封禁原因', field: 'reason', conditional: 'banned' },
                 { label: '操作', type: 'buttonGroup' }
             ]
 		}
@@ -45,8 +45,6 @@ export default {
 	computed: {
 	},
 	mounted() {
-	},
-	watch: {
 	}
 }
 </script>

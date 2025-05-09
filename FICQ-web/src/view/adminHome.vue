@@ -57,7 +57,6 @@
 
 <script>
 import HeadImage from '../components/common/HeadImage.vue';
-
 import {
 	RouterLink
 } from 'vue-router';
@@ -169,18 +168,11 @@ export default {
 	},
 	mounted() {
 		this.init();
-		// 监听路由变化
-		this.$router.afterEach(() => {
-			this.init();
-		});
 	}
 }
 </script>
 
 <style scoped lang="scss">
-*{
-	user-select: none;
-}
 a {
 	color: #000;
 	text-decoration: none;
