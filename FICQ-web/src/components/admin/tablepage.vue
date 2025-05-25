@@ -2,9 +2,10 @@
     <div class="tabPage">
         <Loading v-if="loading" />
         <div class="tabTitle">
-            <div class="t-left">
-                <el-input placeholder="请输入用户名" />
-                <el-button type="primary">搜索</el-button>
+            <div :class="['t-left',placeWord==''?'t-left-hidden':'']">
+                <el-input :placeholder="'请输入' + placeWord" prefix-icon="el-icon-search" v-model="searchWord" />
+                <el-button type="primary" @click="search">搜索</el-button>
+                <el-button type="primary" @click="clearSearch">清空</el-button>
             </div>
             <div class="t-right">
                 <el-pagination :current-page="pageNum" :page-size="pageSize" :pager-count="5" :total="total"
@@ -27,28 +28,28 @@
                         <!-- 动态渲染表格单元格 -->
                         <td v-for="(header, colIndex) in filteredTableHeaders" :key="colIndex">
                             <!-- 根据不同的表头类型渲染不同内容 -->
-                            <template v-if="header.type === 'image'">
-                                <HeadImage :name="item[header.field]" :size="30" :url="item[header.urlField]"></HeadImage>
+                            <template v-if="header.type === 'text'">{{ item[header.field] }}</template>
+                            <template v-else-if="header.type === 'image'">
+                                <HeadImage :name="item[header.field]" :size="30" :url="item[header.urlField]">
+                                </HeadImage>
                             </template>
                             <template v-else-if="header.type === 'date'">
                                 {{ formatTime(item[header.field]) }}
                             </template>
-                            <template v-else-if="header.field==='sex'">
-                                <span v-if="item[header.field]===0">男</span>
-                                <span v-else>女</span>
-                            </template>
-                            <template v-else-if="header.field==='type'">
-                                <span v-if="item[header.field]===0">管理员</span>
-                                <span v-else>普通用户</span>
+                            <template v-else-if="header.type === 'bool'">
+                                <span>{{ header.formatter ? header.formatter(item[header.field]) :
+                                    item[header.field] }}</span>
                             </template>
                             <template v-else-if="header.type === 'buttonGroup'">
-                                <button @click="modify(item.id)">修改</button>
-                                <button v-if="!banned" @click="ban(item.id)">封禁</button>
-                                <button v-else @click="unban(item.id)">解封</button>
-                            </template>
-                            <template v-else-if="header.type === 'conditional'">
-                                <span v-if="!banned">{{ item[header.field] ? "在线" : "离线" }}</span>
-                                <span v-else>{{ item[header.elseField] }}</span>
+                                <div class="buttonGroup">
+                                    <el-button
+                                        :type="btn.conditional === undefined ? 'primary' : btn.conditional ? 'danger' : 'success'"
+                                        size="small" v-for="(btn, btnIndex) in header.buttons" :key="btnIndex"
+                                        v-show="showConditional(btn, dataList[index])"
+                                        @click="executeMethod(btn.method, item)">
+                                        {{ btn.label }}
+                                    </el-button>
+                                </div>
                             </template>
                             <template v-else>
                                 {{ item[header.field] }}
@@ -80,6 +81,11 @@ export default {
             default: "",
             required: true
         },
+        searchUrl: {
+            type: String,
+            default: "",
+            required: false
+        },
         tableHeaders: {
             type: Array,
             default: () => [],
@@ -94,25 +100,37 @@ export default {
             total: 0,
             page: 0,
             pageSizes: [10, 20, 50, 100],
-            dataList: []
+            dataList: [],
+            searchWord: "",
+            searching: false
         }
     },
-    computed: {        
+    computed: {
         // 新增计算属性，返回过滤后的表头数据
         filteredTableHeaders() {
             return this.tableHeaders.filter(header => {
-                if (!header.conditional) {
+                if ((this.url === "privateMessageList" || this.url === "privateSensitiveWordHit") && header.conditional != "group") {
                     return true;
-                }
-                if (header.conditional === '!banned') {
-                    return !this.banned;
-                }
-                if (header.conditional === 'banned') {
-                    return this.banned;
+                } else if ((this.url === "groupMessageList" || this.url === "groupSenstiveWordHit") && header.conditional != "private") {
+                    return true;
+                } else if (header.conditional === undefined || header.conditional === this.banned) {
+                    return true;
                 }
                 return false;
             });
+        },
+        placeWord() {
+            if (this.url === "userList" || this.url === "bannedUserList" || this.url === "privateMessageList" || this.url === "groupMessageList") {
+                return "用户名";
+            } else if (this.url === "groupList" || this.url === "bannedGroupList") {
+                return "群聊名";
+            }else if (this.url === "sensitiveWordList") {
+                return "敏感词";
+            }else {
+                return "";
+            }
         }
+
     },
     methods: {
         init() {
@@ -133,6 +151,35 @@ export default {
                 this.total = res.total;
                 this.page = Math.ceil(res.total / this.pageSize);
                 this.loading = false;
+                this.searching = false;
+            }).catch((err) => {
+                console.log(err);
+            })
+        },
+        search() {
+            this.loading = true;
+            this.$http({
+                method: "post",
+                url: "/admin/" + this.searchUrl,
+                data: {
+                    banned: this.banned,
+                    searchWord: this.searchWord,
+                    pageNum: this.pageNum,
+                    pageSize: this.pageSize
+                }
+            }).then((res) => {
+                this.dataList = res.list;
+                this.total = res.total;
+                this.page = Math.ceil(res.total / this.pageSize);
+                this.loading = false;
+                this.searching = true;
+                if (this.total === 0) {
+                    this.$message({
+                        type: "warning",
+                        message: "未查询到相关数据"
+                    });
+                    this.getDataList();
+                }
             }).catch((err) => {
                 console.log(err);
             })
@@ -142,26 +189,56 @@ export default {
                 return;
             }
             this.pageNum = event;
-            this.getDataList();
+            console.log(this.searching);
+            if (this.searching) {
+                this.search();
+            } else {
+                this.getDataList();
+            }
         },
         handleSizeChange(event) {
             if (event === this.pageSize) {
                 return;
             }
             this.pageSize = event;
-            this.getDataList();
+            if (this.searching) {
+                this.search();
+            } else {
+                this.getDataList();
+            }
         },
-        modifyUser(id) {
-            // 实现修改用户逻辑
+        executeMethod(methodName, event) {
+            this.$emit(methodName, event,(result)=>{
+                if (result === 1) {
+                    this.$message({
+                        type: "success",
+                        message: "操作成功"
+                    });
+                }else {
+                    this.$message({
+                        type: "error",
+                        message: "操作失败"
+                    });
+                }
+                this.getDataList();
+            });
         },
-        banUser(id) {
-            // 实现封禁用户逻辑
+        clearSearch() {
+            this.searchWord = "";
+            if (this.searching) {
+                this.getDataList();
+            }
         },
-        unbanUser(id) {
-            // 实现解封用户逻辑
+        showConditional(btn, row) {
+            if (this.url === "userList" || this.url === "groupList") {
+                return btn.conditional === undefined ? true : btn.conditional === !this.banned;
+            } else if (this.url === "sensitiveWordList") {
+                return btn.conditional === undefined ? true : btn.conditional === row.enabled;
+            } else {
+                return true;
+            }
         },
         formatTime(timestamp) {
-            console.log(timestamp);
             const now = new Date();
             const targetDate = new Date(timestamp);
             const diff = now - targetDate;
@@ -196,6 +273,10 @@ export default {
         banned() {
             this.pageNum = 1; // 重置页码为1
             this.init();
+        },
+        url() {
+            this.pageNum = 1; // 重置页码为1
+            this.init();
         }
     }
 }
@@ -215,6 +296,14 @@ export default {
 .tabTitle .t-left {
     display: flex;
     align-items: center;
+}
+
+.tabTitle .t-left>*{
+    margin: 0;
+    margin-right: 0.5vw;
+}
+.t-left-hidden {
+    visibility: hidden;
 }
 
 .tabTitle .pageNum span {
@@ -247,11 +336,29 @@ export default {
 .list td {
     border: 1px solid #ccc;
     padding: 0.75vh 0;
+    max-width: 20vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .list .head-image {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.list .buttonGroup {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.list .buttonGroup .redButton {
+    background-color: red;
+}
+
+.list .buttonGroup .greenButton {
+    background-color: green;
 }
 </style>

@@ -1,6 +1,7 @@
 package org.lc.ficq.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import jakarta.validation.Valid;
 import org.lc.ficq.dto.LoginDTO;
 import org.lc.ficq.dto.ModifyPwdDTO;
 import org.lc.ficq.dto.PageQueryDTO;
@@ -89,4 +90,6 @@ public interface UserService extends IService<User> {
 
 
     ListResultVO<UserVO> findUserList(PageQueryDTO dto);
+
+    ListResultVO<UserVO> findUser(PageQueryDTO dto);
 }

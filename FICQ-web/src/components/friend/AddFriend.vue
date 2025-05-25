@@ -1,8 +1,8 @@
 <template>
     <el-dialog title="添加好友" :visible.sync="dialogVisible" width="400px" :before-close="onClose"
         custom-class="add-friend-dialog">
-        <el-input placeholder="输入用户名或昵称按下 enter 搜索，最多展示 20 条" class="input-with-select" v-model="searchText" size="small"
-            @keyup.enter.native="onSearch()">
+        <el-input placeholder="输入用户名或昵称按下 enter 搜索，最多展示 20 条" class="input-with-select" v-model="searchText"
+            size="small" @keyup.enter.native="onSearch()">
             <i class="el-icon-search el-input__icon" slot="suffix" @click="onSearch()"> </i>
         </el-input>
         <!-- 使用 Flex 布局 -->
@@ -18,12 +18,14 @@
                     </div>
                     <div class="add-friend-text">
                         <div class="nick-name">
-                            <div>{{ user.nickName }}</div>
+                            <!-- 高亮昵称中的搜索关键字 -->
+                            <div v-html="highlightText(user.nickName, searchText)"></div>
                             <div :class="user.online ? 'online-status  online' : 'online-status'">{{
-                                user.online ? "[在线]" : "[离线]"}}</div>
+                                user.online ? "[在线]" : "[离线]" }}</div>
                         </div>
                         <div class="user-name">
-                            <div>用户名:{{ user.userName }}</div>
+                            <!-- 高亮用户名中的搜索关键字 -->
+                            <div>用户名:<span v-html="highlightText(user.userName, searchText)"></span></div>
                         </div>
                     </div>
                     <el-button type="success" size="mini" v-show="!isFriend(user.id)"
@@ -36,7 +38,6 @@
 </template>
 <script>
 import HeadImage from '../common/HeadImage.vue'
-
 
 export default {
     name: "addFriend",
@@ -84,6 +85,9 @@ export default {
         },
         onClose() {
             this.$emit("close");
+            this.searchText = "";
+            this.isSearchResult = false;
+            this.displayedUsers = this.allUsers.slice(0, 5);
         },
         onSearch() {
             if (!this.searchText) {
@@ -99,7 +103,6 @@ export default {
                 }
             }).then((data) => {
                 this.displayedUsers = data;
-                this.allUsers = [];
                 this.currentIndex = 0;
             });
         },
@@ -124,6 +127,12 @@ export default {
         },
         isFriend(userId) {
             return this.$store.getters.isFriend(userId);
+        },
+        // 高亮关键字的方法
+        highlightText(text, keyword) {
+            if (!keyword) return text;
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
         }
     },
     mounted() {
@@ -133,47 +142,53 @@ export default {
 </script>
 <style lang="scss">
 .add-friend-dialog {
-	.item {
-		height: 65px;
-		display: flex;
-		position: relative;
-		padding-left: 15px;
-		align-items: center;
-		padding-right: 25px;
+    .item {
+        height: 65px;
+        display: flex;
+        position: relative;
+        padding-left: 15px;
+        align-items: center;
+        padding-right: 25px;
 
-		.add-friend-text {
-			margin-left: 15px;
-			flex: 3;
-			display: flex;
-			flex-direction: column;
-			flex-shrink: 0;
-			overflow: hidden;
+        .add-friend-text {
+            margin-left: 15px;
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow: hidden;
 
-			.nick-name {
-				display: flex;
-				flex-direction: row;
-				font-weight: 600;
-				font-size: 16px;
-				line-height: 25px;
+            .nick-name {
+                display: flex;
+                flex-direction: row;
+                font-weight: 600;
+                font-size: 16px;
+                line-height: 25px;
 
-				.online-status {
-					font-size: 12px;
-					font-weight: 600;
+                .online-status {
+                    font-size: 12px;
+                    font-weight: 600;
 
-					&.online {
-						color: #5fb878;
-					}
-				}
-			}
+                    &.online {
+                        color: #5fb878;
+                    }
+                }
+            }
 
-			.user-name {
-				display: flex;
-				flex-direction: row;
-				font-size: 12px;
-				line-height: 20px;
-			}
+            .user-name {
+                display: flex;
+                flex-direction: row;
+                font-size: 12px;
+                line-height: 20px;
+            }
 
-		}
-	}
+        }
+    }
+
+    // 添加高亮样式
+    .highlight {
+        background-color: yellow;
+        font-weight: bold;
+    }
 }
 </style>

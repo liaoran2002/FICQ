@@ -17,4 +17,7 @@ public class PageQueryDTO {
     @NotNull(message = "每页数量不能为空")
     @Schema(description = "每页数量", example = "10")
     private Integer pageSize;
+
+    @Schema(description = "搜索词", example = "")
+    private String searchWord;
 }

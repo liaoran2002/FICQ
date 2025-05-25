@@ -1,8 +1,11 @@
 package org.lc.ficq.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import jakarta.validation.Valid;
+import org.lc.ficq.dto.PageQueryDTO;
 import org.lc.ficq.dto.PrivateMessageDTO;
 import org.lc.ficq.entity.PrivateMessage;
+import org.lc.ficq.vo.ListResultVO;
 import org.lc.ficq.vo.PrivateMessageVO;
 
 
@@ -57,4 +60,8 @@ public interface PrivateMessageService extends IService<PrivateMessage> {
      * @param friendId 好友id
      */
     Long getMaxReadedId(Long friendId);
+
+    ListResultVO<PrivateMessageVO> findMessageList(@Valid PageQueryDTO dto);
+
+    ListResultVO<PrivateMessageVO> findSensitiveWordHit(@Valid PageQueryDTO dto);
 }

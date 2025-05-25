@@ -105,8 +105,12 @@ export default {
 					label: '敏感词列表'
 				},
 				{
-					path: '/adminHome/sensitiveWordHits',
-					label: '敏感词命中'
+					path: '/adminHome/privateSensitiveWordHit',
+					label: '私聊敏感词命中'
+				},
+				{
+					path: '/adminHome/groupSensitiveWordHit',
+					label: '群聊敏感词命中'
 				}
 				]
 			},
@@ -114,12 +118,8 @@ export default {
 				icon: 'icon-chat',
 				label: '消息管理',
 				children: [{
-					path: '/adminHome/messageList',
-					label: '消息列表'
-				},
-				{
-					path: '/adminHome/userMessageList',
-					label: '用户消息列表'
+					path: '/adminHome/privateMessageList',
+					label: '私聊消息列表'
 				},
 				{
 					path: '/adminHome/groupMessageList',

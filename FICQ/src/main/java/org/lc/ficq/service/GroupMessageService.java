@@ -1,9 +1,12 @@
 package org.lc.ficq.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import jakarta.validation.Valid;
 import org.lc.ficq.dto.GroupMessageDTO;
+import org.lc.ficq.dto.PageQueryDTO;
 import org.lc.ficq.entity.GroupMessage;
 import org.lc.ficq.vo.GroupMessageVO;
+import org.lc.ficq.vo.ListResultVO;
 
 
 import java.util.List;
@@ -57,4 +60,8 @@ public interface GroupMessageService extends IService<GroupMessage> {
      * @return 聊天记录列表
      */
     List<GroupMessageVO> findHistoryMessage(Long groupId, Long page, Long size);
+
+    ListResultVO<GroupMessageVO> findMessageList(@Valid PageQueryDTO dto);
+
+    ListResultVO<GroupMessageVO> findSensitiveWordHit(@Valid PageQueryDTO dto);
 }

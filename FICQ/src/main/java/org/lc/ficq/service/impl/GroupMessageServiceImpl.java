@@ -6,12 +6,14 @@ import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.lc.ficq.contant.Constant;
 import org.lc.ficq.dto.GroupMessageDTO;
+import org.lc.ficq.dto.PageQueryDTO;
 import org.lc.ficq.entity.Group;
 import org.lc.ficq.entity.GroupMember;
 import org.lc.ficq.entity.GroupMessage;
@@ -32,6 +34,7 @@ import org.lc.ficq.util.BeanUtils;
 import org.lc.ficq.util.CommaTextUtils;
 import org.lc.ficq.util.SensitiveFilterUtil;
 import org.lc.ficq.vo.GroupMessageVO;
+import org.lc.ficq.vo.ListResultVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,7 +79,11 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
         msg.setAtUserIds(CommaTextUtils.asText(dto.getAtUserIds()));
         // 过滤内容中的敏感词
         if(MessageType.TEXT.code().equals(dto.getType())){
-            msg.setContent(sensitiveFilterUtil.filter(dto.getContent()));
+            Map.Entry<String, Boolean> stringBooleanEntry = sensitiveFilterUtil.filter(dto.getContent());
+            msg.setContent(stringBooleanEntry.getKey());
+            if (stringBooleanEntry.getValue()) {
+                msg.setType(MessageType.SENTEXT.code());
+            }
         }
         this.save(msg);
     }
@@ -293,6 +300,26 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
         return messageInfos;
     }
 
+    @Override
+    public ListResultVO<GroupMessageVO> findMessageList(PageQueryDTO dto) {
+        LambdaQueryWrapper<GroupMessage> wrapper = Wrappers.lambdaQuery();
+        List<GroupMessage> groupMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),wrapper).getRecords();
+        ListResultVO<GroupMessageVO> vo = new ListResultVO<>();
+        vo.setList(groupMessages.stream().map(groupMessage -> BeanUtils.copyProperties(groupMessage,GroupMessageVO.class)).toList());
+        vo.setTotal(this.count(wrapper));
+        return vo;
+    }
+
+    @Override
+    public ListResultVO<GroupMessageVO> findSensitiveWordHit(PageQueryDTO dto) {
+        LambdaQueryWrapper<GroupMessage> wrapper = Wrappers.lambdaQuery();
+        List<GroupMessage> groupMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),wrapper.eq(GroupMessage::getType,5)).getRecords();
+        ListResultVO<GroupMessageVO> vo = new ListResultVO<>();
+        vo.setList(groupMessages.stream().map(groupMessage -> BeanUtils.copyProperties(groupMessage,GroupMessageVO.class)).toList());
+        vo.setTotal(this.count(wrapper));
+        return vo;
+    }
+
     /*
     private List<Long> getReadedUserIds(Map<Object, Object> maxIdMap, Long messageId, Long sendId) {
         List<Long> userIds = new LinkedList<>();
@@ -322,5 +349,5 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
         sendMessage.setSendResult(false);
         webSocketMessageService.sendGroupMessage(sendMessage);
     }
-
+    
 }

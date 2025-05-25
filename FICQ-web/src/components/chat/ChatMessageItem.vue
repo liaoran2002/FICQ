@@ -21,7 +21,7 @@
 				</div>
 				<div class="chat-msg-bottom" @contextmenu.prevent="showRightMenu($event)">
 					<div ref="chatMsgBox">
-						<span class="chat-msg-text" v-if="msgInfo.type == $enums.MESSAGE_TYPE.TEXT"
+						<span class="chat-msg-text" v-if="msgInfo.type == $enums.MESSAGE_TYPE.TEXT || msgInfo.type == $enums.MESSAGE_TYPE.SENTEXT"
 							v-html="htmlText"></span>
 						<div class="chat-msg-image" v-if="msgInfo.type == $enums.MESSAGE_TYPE.IMAGE">
 							<div class="img-load-box" v-loading="loading" element-loading-text="上传中.."

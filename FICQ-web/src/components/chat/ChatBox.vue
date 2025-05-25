@@ -47,15 +47,6 @@
 								</div>
 								<div title="发送语音" class="el-icon-microphone" @click="showRecordBox()">
 								</div>
-								<div title="语音通话" v-show="chat.type == 'PRIVATE'" class="el-icon-phone-outline"
-									@click="showPrivateVideo('voice')">
-								</div>
-								<div title="语音通话" v-show="chat.type == 'GROUP'" class="el-icon-phone-outline"
-									@click="onGroupVideo()">
-								</div>
-								<div title="视频通话" v-show="chat.type == 'PRIVATE'" class="el-icon-video-camera"
-									@click="showPrivateVideo('video')">
-								</div>
 								<div title="聊天记录" class="el-icon-chat-dot-round" @click="showHistoryBox()"></div>
 							</div>
 							<div class="send-content-area">

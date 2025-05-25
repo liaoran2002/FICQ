@@ -6,15 +6,18 @@
 		<div class="main">
 			<Loading />
 		</div>
+		<backToTop :targetSelector="'box'" />
 	</div>
 </template>
 
 <script>
 import Loading from '../../components/admin/loading.vue';
+import backToTop from '../../components/admin/backToTop.vue';
 export default {
 	name: "homeBox",
 	components: {
-		Loading
+		Loading,
+		backToTop
 	},
 	data() {
 		return {}

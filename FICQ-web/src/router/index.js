@@ -90,19 +90,27 @@ export default new VueRouter({
 					component: () => import("../view/admin/sensitiveWordList")
 				},
 				{
-					name: "messageList",
-					path: "/adminHome/messageList",
-					component: () => import("../view/admin/messageList"),
+					name: "privateSensitiveWordHit",
+					path: "/adminHome/privateSensitiveWordHit",
+					component: () => import("../view/admin/sensitiveWordHit"),
 					props: {
-						messageType: "all"
+						messageType: "private"
 					}
 				},
 				{
-					name: "userMessageList",
-					path: "/adminHome/userMessageList",
+					name: "groupSensitiveWordHit",
+					path: "/adminHome/groupSensitiveWordHit",
+					component: () => import("../view/admin/sensitiveWordHit"),
+					props: {
+						messageType: "group"
+					}
+				},
+				{
+					name: "privateMessageList",
+					path: "/adminHome/privateMessageList",
 					component: () => import("../view/admin/messageList"),
 					props: {
-						messageType: "user"
+						messageType: "private"
 					}
 				},
 				{

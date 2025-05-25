@@ -1,0 +1,38 @@
+/* 水平间距 */
+/* 水平间距 */
+/**************************************************/
+/* 行为相关颜色 */
+/* 文字基本颜色 */
+/* 背景颜色 */
+/* 边框颜色 */
+/* 尺寸变量 */
+/* 文字尺寸 */
+/* 图片尺寸 */
+/* Border Radius */
+/* 水平间距 */
+/* 垂直间距 */
+/* 透明度 */
+/* 文章场景相关 */
+.chat-group-video .header[data-v-d085553c] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 1.875rem;
+  padding: 5px;
+  background-color: white;
+  line-height: 50px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.chat-group-video .header .btn-side[data-v-d085553c] {
+  position: absolute;
+  line-height: 1.875rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.chat-group-video .header .btn-side.left[data-v-d085553c] {
+  left: 0.9375rem;
+}
+.chat-group-video .header .btn-side.right[data-v-d085553c] {
+  right: 0.9375rem;
+}

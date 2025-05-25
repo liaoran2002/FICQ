@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.lc.ficq.contant.Constant;
+import org.lc.ficq.dto.PageQueryDTO;
 import org.lc.ficq.dto.PrivateMessageDTO;
 import org.lc.ficq.entity.PrivateMessage;
+import org.lc.ficq.entity.SensitiveWord;
 import org.lc.ficq.enums.MessageStatus;
 import org.lc.ficq.enums.MessageType;
 import org.lc.ficq.enums.TerminalType;
@@ -24,12 +27,15 @@ import org.lc.ficq.service.PrivateMessageService;
 import org.lc.ficq.session.SessionContext;
 import org.lc.ficq.session.UserSession;
 import org.lc.ficq.util.SensitiveFilterUtil;
+import org.lc.ficq.vo.ListResultVO;
 import org.lc.ficq.vo.PrivateMessageVO;
+import org.lc.ficq.vo.SensitiveWordVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.lc.ficq.util.BeanUtils;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -59,7 +65,11 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         msg.setSendTime(new Date());
         // 过滤内容中的敏感词
         if (MessageType.TEXT.code().equals(dto.getType())) {
-            msg.setContent(sensitiveFilterUtil.filter(dto.getContent()));
+            Map.Entry<String, Boolean> stringBooleanEntry = sensitiveFilterUtil.filter(dto.getContent());
+            msg.setContent(stringBooleanEntry.getKey());
+            if (stringBooleanEntry.getValue()) {
+                msg.setType(MessageType.SENTEXT.code());
+            }
         }
         }
         this.save(msg);
@@ -219,6 +229,26 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
             return -1L;
         }
         return message.getId();
+    }
+
+    @Override
+    public ListResultVO<PrivateMessageVO> findSensitiveWordHit(PageQueryDTO dto) {
+        LambdaQueryWrapper<PrivateMessage> wrapper = Wrappers.lambdaQuery();
+        List<PrivateMessage> privateMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),wrapper.eq(PrivateMessage::getType,5)).getRecords();
+        ListResultVO<PrivateMessageVO> vo = new ListResultVO<>();
+        vo.setList(privateMessages.stream().map(privateMessage -> BeanUtils.copyProperties(privateMessage,PrivateMessageVO.class)).toList());
+        vo.setTotal(this.count(wrapper));
+        return vo;
+    }
+
+    @Override
+    public ListResultVO<PrivateMessageVO> findMessageList(PageQueryDTO dto) {
+        LambdaQueryWrapper<PrivateMessage> wrapper = Wrappers.lambdaQuery();
+        List<PrivateMessage> privateMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),wrapper).getRecords();
+        ListResultVO<PrivateMessageVO> vo = new ListResultVO<>();
+        vo.setList(privateMessages.stream().map(privateMessage -> BeanUtils.copyProperties(privateMessage,PrivateMessageVO.class)).toList());
+        vo.setTotal(this.count(wrapper));
+        return vo;
     }
 
     private void sendLoadingMessage(Boolean isLoadding) {

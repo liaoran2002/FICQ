@@ -200,15 +200,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         LambdaQueryWrapper<User> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.like(User::getUserName, name).or().like(User::getNickName, name).last("limit 20");
         List<User> users = this.list(queryWrapper);
-        List<Long> userIds = users.stream().map(User::getId).collect(Collectors.toList());
-        List<Long> onlineUserIds = webSocketMessageService.getOnlineUser(userIds);
-        return users.stream().map(u -> {
-            UserVO vo = BeanUtils.copyProperties(u, UserVO.class);
-            if (vo != null) {
-                vo.setOnline(onlineUserIds.contains(u.getId()));
-            }
-            return vo;
-        }).collect(Collectors.toList());
+        return this.formatUser(users);
     }
 
     @Override
@@ -222,32 +214,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         List<User> allNonFriendUsers = this.list(queryWrapper);
         if (allNonFriendUsers.size() < count) {
-            return allNonFriendUsers.stream().map(user -> BeanUtils.copyProperties(user, UserVO.class)).collect(Collectors.toList());
+            return this.formatUser(allNonFriendUsers);
         }
         //优先推荐在线用户
         List<Long> onlineUserIds = webSocketMessageService.getOnlineUser(allNonFriendUsers.stream().map(User::getId).collect(Collectors.toList()));
         List<User> onlineUsers = allNonFriendUsers.stream().filter(user -> onlineUserIds.contains(user.getId())).toList();
         if (onlineUsers.size() >= count) {
-            return onlineUsers.stream().skip((int) (Math.random() * (onlineUsers.size() - count))).limit(count).map(user -> {
-                UserVO vo = BeanUtils.copyProperties(user, UserVO.class);
-                if (vo != null) {
-                    vo.setOnline(true);
-                }
-                return vo;
-            }).collect(Collectors.toList());
+            return this.formatUser(onlineUsers,true);
         } else if (!onlineUsers.isEmpty()) {
-            List<UserVO> userVOS = new ArrayList<>(onlineUsers.stream().map(user -> {
-                UserVO vo = BeanUtils.copyProperties(user, UserVO.class);
-                if (vo != null) {
-                    vo.setOnline(true);
-                }
-                return vo;
-            }).toList());
+            List<UserVO> userVOS = this.formatUser(onlineUsers,true);
             count -= userVOS.size();
-            userVOS.addAll(allNonFriendUsers.stream().skip((int) (Math.random() * (allNonFriendUsers.size() - count))).limit(count).map(user -> BeanUtils.copyProperties(user, UserVO.class)).toList());
+            userVOS.addAll(this.formatUser(allNonFriendUsers.stream().skip((int) (Math.random() * (allNonFriendUsers.size() - count))).limit(count).toList()));
             return userVOS;
         }else
-            return allNonFriendUsers.stream().skip((int) (Math.random() * (allNonFriendUsers.size() - count))).limit(count).map(user -> BeanUtils.copyProperties(user, UserVO.class)).collect(Collectors.toList());
+            return this.formatUser(allNonFriendUsers.stream().skip((int) (Math.random() * (allNonFriendUsers.size() - count))).limit(count).toList());
     }
 
     @Override
@@ -265,6 +245,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    public ListResultVO<UserVO> findUser(PageQueryDTO dto) {
+        UserSession session = SessionContext.getSession();
+        if (this.findUserById(session.getUserId()).getType()!=0){
+            throw new GlobalException("不是管理账户，禁止查询!");
+        }
+        if(dto.getBanned()==null){
+            throw new GlobalException("封禁状态未添加!");
+        }
+        LambdaQueryWrapper<User> queryWrapper = Wrappers.lambdaQuery();
+        List<User> users=this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),queryWrapper.eq(User::getIsBanned,dto.getBanned()).like(User::getUserName,dto.getSearchWord())).getRecords();
+        ListResultVO<UserVO> result = new ListResultVO<>();
+        result.setList(this.formatUser(users));
+        result.setTotal(this.count(queryWrapper));
+        return result;
+    }
+
+    @Override
     public ListResultVO<UserVO> findUserList(PageQueryDTO dto) {
         UserSession session = SessionContext.getSession();
         if (this.findUserById(session.getUserId()).getType()!=0){
@@ -275,17 +272,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         LambdaQueryWrapper<User> queryWrapper = Wrappers.lambdaQuery();
         List<User> users=this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),queryWrapper.eq(User::getIsBanned,dto.getBanned())).getRecords();
-        long count = this.count(queryWrapper);
         ListResultVO<UserVO> result = new ListResultVO<>();
-        result.setList(users.stream().map(user -> {
+        result.setList(this.formatUser(users));
+        result.setTotal(this.count(queryWrapper));
+        return result;
+    }
+
+    private List<UserVO> formatUser(List<User> users){
+        return users.stream().map(user -> {
             UserVO vo = BeanUtils.copyProperties(user,UserVO.class);
             if (vo!=null){
                 vo.setOnline(webSocketMessageService.isOnline(user.getId()));
-                return vo;
             }else
                 throw new GlobalException("用户信息转换失败!");
-        }).collect(Collectors.toList()));
-        result.setTotal(count);
-        return result;
+            return vo;
+        }).toList();
+    }
+    private List<UserVO> formatUser(List<User> users,boolean online){
+        return users.stream().map(user -> {
+            UserVO vo = BeanUtils.copyProperties(user,UserVO.class);
+            if (vo!=null){
+                vo.setOnline(online);
+            }else
+                throw new GlobalException("用户信息转换失败!");
+            return vo;
+        }).toList();
     }
 }

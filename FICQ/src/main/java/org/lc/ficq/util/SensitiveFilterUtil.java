@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.lc.ficq.service.SensitiveWordService;
 import org.springframework.stereotype.Component;
 
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,9 +116,10 @@ public final class SensitiveFilterUtil {
      * @param text 待过滤的文本
      * @return 过滤后的文本
      */
-    public String filter(String text) {
+    public Map.Entry<String, Boolean> filter(String text) {
+        boolean senText=false;
         if (StringUtils.isBlank(text)) {
-            return null;
+            return new AbstractMap.SimpleEntry<>(null, senText);
         }
         // 结果
         StringBuilder sb = new StringBuilder();
@@ -152,6 +154,7 @@ public final class SensitiveFilterUtil {
                         // 重新指向根节点
                         tempNode = ROOT_NODE;
                     } else if (tempNode.isKeywordEnd()) {
+                        senText = true;
                         // 发现敏感词,将begin~position字符串替换掉
                         sb.append(REPLACE_MENT);
                         // 进入下一个位置
@@ -173,7 +176,7 @@ public final class SensitiveFilterUtil {
         } catch (Exception e) {
             sb = new StringBuilder(text);
         }
-        return sb.toString();
+        return new AbstractMap.SimpleEntry<>(sb.toString(), senText);
     }
 
     /**

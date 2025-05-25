@@ -211,7 +211,7 @@ export default {
 				return;
 			}
 			// 消息撤回
-			if (msg.type == this.$enums.MESSAGE_TYPE.RECALL) {
+			if (msg.type == this.$enums.MESSAGE_TYPE.RECALL||msg.type == this.$enums.MESSAGE_TYPE.ADMINRC) {
 				this.$store.commit("recallMessage", [msg, chatInfo])
 				return;
 			}

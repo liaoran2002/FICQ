@@ -169,7 +169,8 @@ export default {
 				chat.lastContent = "[视频通话]";
 			} else if (msgInfo.type == MESSAGE_TYPE.TEXT ||
 				msgInfo.type == MESSAGE_TYPE.RECALL ||
-				msgInfo.type == MESSAGE_TYPE.TIP_TEXT) {
+				msgInfo.type == MESSAGE_TYPE.TIP_TEXT ||
+				msgInfo.type == MESSAGE_TYPE.SENTEXT ) {
 				chat.lastContent = msgInfo.content;
 			}
 			chat.lastSendTime = msgInfo.sendTime;
@@ -254,6 +255,7 @@ export default {
 					// 改造成一条提示消息
 					m.status = MESSAGE_STATUS.RECALL;
 					m.content = name + "撤回了一条消息";
+					if(msgInfo.type===MESSAGE_TYPE.ADMINRC) m.content="管理员撤回了一条成员消息";
 					m.type = MESSAGE_TYPE.TIP_TEXT
 					// 会话列表
 					chat.lastContent = m.content;
