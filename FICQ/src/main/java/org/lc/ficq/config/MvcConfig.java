@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
@@ -28,9 +29,20 @@ public class MvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(xssInterceptor).addPathPatterns("/**").excludePathPatterns("/error");
-        registry.addInterceptor(authInterceptor).addPathPatterns("/**")
-            .excludePathPatterns("/login", "/logout", "/register", "/refreshToken", "/swagger/**", "/v3/api-docs/**",
-                "/swagger-resources/**", "/swagger-ui.html", "/swagger-ui/**", "/doc.html");
+        registry.addInterceptor(authInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        // 认证相关接口
+                        "/login", "/logout", "/register", "/refreshToken","/error",
+                        // Swagger相关路径
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/doc.html",
+                        // 其他公共资源
+                        "/public/**", "/static/**"
+                );
     }
 
     @Bean

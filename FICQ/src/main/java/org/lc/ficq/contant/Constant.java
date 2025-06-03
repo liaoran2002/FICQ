@@ -28,5 +28,5 @@ public final class Constant {
     /**
      * 图片最大 20M
      */
-    public static final int MAX_IMAGE_SIZE = 20971520;
+    public static final int MAX_IMAGE_SIZE = 5242880;
 }

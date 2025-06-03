@@ -41,6 +41,12 @@
 										<i class="el-icon-wallet"></i>
 									</file-upload>
 								</div>
+								<div title="发送视频">
+									<file-upload ref="videoUpload" :action="'/video/upload'" :maxSize="10 * 1024 * 1024"
+										@before="onVideoBefore" @success="onVideoSuccess" @fail="onVideoFail">
+										<i class="el-icon-video-camera"></i>
+									</file-upload>
+								</div>
 								<div title="回执消息" v-show="chat.type == 'GROUP' && memberSize <= 500"
 									class="icon iconfont icon-receipt" :class="isReceipt ? 'chat-tool-active' : ''"
 									@click="onSwitchReceipt">
@@ -67,8 +73,6 @@
 			</el-main>
 			<emotion ref="emoBox" @emotion="onEmotion"></Emotion>
 			<chat-record :visible="showRecord" @close="closeRecordBox" @send="onSendRecord"></chat-record>
-			<group-member-selector ref="rtcSel" :groupId="group.id" @complete="onInviteOk"></group-member-selector>
-			<rtc-group-join ref="rtcJoin" :groupId="group.id"></rtc-group-join>
 			<chat-history :visible="showHistory" :chat="chat" :friend="friend" :group="group"
 				:groupMembers="groupMembers" @close="closeHistoryBox"></chat-history>
 		</el-container>
@@ -84,7 +88,6 @@ import ChatRecord from "./ChatRecord.vue";
 import ChatHistory from "./ChatHistory.vue";
 import ChatAtBox from "./ChatAtBox.vue"
 import GroupMemberSelector from "../group/GroupMemberSelector.vue"
-import RtcGroupJoin from "../rtc/RtcGroupJoin.vue"
 import ChatInput from "./ChatInput";
 
 
@@ -100,7 +103,6 @@ export default {
 		ChatHistory,
 		ChatAtBox,
 		GroupMemberSelector,
-		RtcGroupJoin
 	},
 	props: {
 		chat: {
@@ -156,7 +158,24 @@ export default {
 				this.$store.commit("insertMessage", [msgInfo, file.chat]);
 			})
 		},
+		onVideoSuccess(data, file) {
+			console.log(file.msgInfo);
+			let msgInfo = JSON.parse(JSON.stringify(file.msgInfo));
+			msgInfo.content = JSON.stringify(data);
+			msgInfo.receipt = this.isReceipt;
+			this.sendMessageRequest(msgInfo).then((m) => {
+				msgInfo.loadStatus = 'ok';
+				msgInfo.id = m.id;
+				this.isReceipt = false;
+				this.$store.commit("insertMessage", [msgInfo, file.chat]);
+			})
+		},
 		onImageFail(e, file) {
+			let msgInfo = JSON.parse(JSON.stringify(file.msgInfo));
+			msgInfo.loadStatus = 'fail';
+			this.$store.commit("insertMessage", [msgInfo, file.chat]);
+		},
+		onVideoFail(e, file) {
 			let msgInfo = JSON.parse(JSON.stringify(file.msgInfo));
 			msgInfo.loadStatus = 'fail';
 			this.$store.commit("insertMessage", [msgInfo, file.chat]);
@@ -181,6 +200,41 @@ export default {
 				sendTime: new Date().getTime(),
 				selfSend: true,
 				type: 1,
+				readedCount: 0,
+				loadStatus: "loading",
+				status: this.$enums.MESSAGE_STATUS.UNSEND
+			}
+			// 填充对方id
+			this.fillTargetId(msgInfo, this.chat.targetId);
+			// 插入消息
+			this.$store.commit("insertMessage", [msgInfo, this.chat]);
+			// 会话置顶
+			this.moveChatToTop();
+			// 滚动到底部
+			this.scrollToBottom();
+			// 借助file对象保存
+			file.msgInfo = msgInfo;
+			file.chat = this.chat;
+		},
+		onVideoBefore(file) {
+			// 被封禁提示
+			if (this.isBanned) {
+				this.showBannedTip();
+			}
+			let url = URL.createObjectURL(file);
+			let data = {
+				originUrl: url,
+				thumbUrl: url
+			}
+			let msgInfo = {
+				id: 0,
+				tmpId: this.generateId(),
+				fileId: file.uid,
+				sendId: this.mine.id,
+				content: JSON.stringify(data),
+				sendTime: new Date().getTime(),
+				selfSend: true,
+				type: 4,
 				readedCount: 0,
 				loadStatus: "loading",
 				status: this.$enums.MESSAGE_STATUS.UNSEND
@@ -287,55 +341,6 @@ export default {
 		},
 		closeRecordBox() {
 			this.showRecord = false;
-		},
-		showPrivateVideo(mode) {
-			// 检查是否被封禁
-			if (this.isBanned) {
-				this.showBannedTip();
-				return;
-			}
-
-			let rtcInfo = {
-				mode: mode,
-				isHost: true,
-				friend: this.friend,
-			}
-			// 通过home.vue打开单人视频窗口
-			this.$eventBus.$emit("openPrivateVideo", rtcInfo);
-		},
-		onGroupVideo() {
-			// 检查是否被封禁
-			if (this.isBanned) {
-				this.showBannedTip();
-				return;
-			}
-			// 邀请成员发起通话
-			let ids = [this.mine.id];
-			let maxChannel = this.$store.state.configStore.webrtc.maxChannel;
-			this.$refs.rtcSel.open(maxChannel, ids, ids);
-		},
-		onInviteOk(members) {
-			if (members.length < 2) {
-				return;
-			}
-			let userInfos = [];
-			members.forEach(m => {
-				userInfos.push({
-					id: m.userId,
-					nickName: m.showNickName,
-					headImage: m.headImage,
-					isCamera: false,
-					isMicroPhone: true
-				})
-			})
-			let rtcInfo = {
-				isHost: true,
-				groupId: this.group.id,
-				inviterId: this.mine.id,
-				userInfos: userInfos
-			}
-			// 通过home.vue打开多人视频窗口
-			this.$eventBus.$emit("openGroupVideo", rtcInfo);
 		},
 		showHistoryBox() {
 			this.showHistory = true;

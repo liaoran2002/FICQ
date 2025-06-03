@@ -25,6 +25,9 @@ spring:
       load-on-startup: 1
     pathmatch:
       matching-strategy: ant_path_matcher
+  web:
+    resources:
+      static-locations: classpath:/static/,classpath:/public/,classpath:/resources/,classpath:/META-INF/resources/,file:./ficq/
 
 websocket:
   enable: true
@@ -63,15 +66,7 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 file:
-  baseUploadDir: D:/data/ficq/
-  staticAvatarPath: /avatars/**
-  upAvatarFolder: D:/data/avatars/
-  chatPath: /chat/
-  staticChatPath: /chat/**
-  upChatFolder: D:/data/chat/
-  htmlPath: /html/
-  staticHtmlPath: /html/**
-  upHtmlFolder: D:/data/html/
+  baseUploadDir: ./ficq
 
 #application.yml 是 Spring Boot 中用来配置应用程序的文件，其中包含了许多可用的选项：
 #服务器端口：server.port

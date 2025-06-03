@@ -27,7 +27,23 @@ public final class FileUtil {
                 return true;
             }
         }
+        return false;
+    }
 
+    /**
+     * 判断文件是否视频类型
+     *
+     * @param fileName 文件名
+     * @return boolean
+     */
+    public static boolean isVideo(String fileName) {
+        String extension = getFileExtension(fileName);
+        String[] videoExtension = new String[]{"mp4", "avi", "rmvb", "wmv", "flv", "mov", "mkv"};
+        for (String e : videoExtension) {
+            if (extension.toLowerCase().equals(e)) {
+                return true;
+            }
+        }
         return false;
     }
 }

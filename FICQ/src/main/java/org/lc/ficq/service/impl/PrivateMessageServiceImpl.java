@@ -33,6 +33,7 @@ import org.lc.ficq.vo.SensitiveWordVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.lc.ficq.util.BeanUtils;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper, PrivateMessage>
-    implements PrivateMessageService {
+        implements PrivateMessageService {
 
     private final FriendService friendService;
     private final WebSocketMessageService webSocketMessageService;
@@ -60,17 +61,20 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         PrivateMessage msg = BeanUtils.copyProperties(dto, PrivateMessage.class);
         if (msg != null) {
             msg.setSendId(session.getUserId());
-
-        msg.setStatus(MessageStatus.UNSEND.code());
-        msg.setSendTime(new Date());
-        // 过滤内容中的敏感词
-        if (MessageType.TEXT.code().equals(dto.getType())) {
-            Map.Entry<String, Boolean> stringBooleanEntry = sensitiveFilterUtil.filter(dto.getContent());
-            msg.setContent(stringBooleanEntry.getKey());
-            if (stringBooleanEntry.getValue()) {
-                msg.setType(MessageType.SENTEXT.code());
+            if (webSocketMessageService.isOnline(dto.getRecvId())) {
+                msg.setStatus(MessageStatus.SENDED.code());
+            } else {
+                msg.setStatus(MessageStatus.UNSEND.code());
             }
-        }
+            msg.setSendTime(new Date());
+            // 过滤内容中的敏感词
+            if (MessageType.TEXT.code().equals(dto.getType())) {
+                Map.Entry<String, Boolean> stringBooleanEntry = sensitiveFilterUtil.filter(dto.getContent());
+                msg.setContent(stringBooleanEntry.getKey());
+                if (stringBooleanEntry.getValue()) {
+                    msg.setType(MessageType.SENTEXT.code());
+                }
+            }
         }
         this.save(msg);
         // 推送消息
@@ -135,15 +139,15 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         long stIdx = (page - 1) * size;
         QueryWrapper<PrivateMessage> wrapper = new QueryWrapper<>();
         wrapper.lambda().and(
-                wrap -> wrap.and(wp -> wp.eq(PrivateMessage::getSendId, userId).eq(PrivateMessage::getRecvId, friendId))
-                    .or(wp -> wp.eq(PrivateMessage::getRecvId, userId).eq(PrivateMessage::getSendId, friendId)))
-            .ne(PrivateMessage::getStatus, MessageStatus.RECALL.code()).orderByDesc(PrivateMessage::getId)
-            .last("limit " + stIdx + "," + size);
+                        wrap -> wrap.and(wp -> wp.eq(PrivateMessage::getSendId, userId).eq(PrivateMessage::getRecvId, friendId))
+                                .or(wp -> wp.eq(PrivateMessage::getRecvId, userId).eq(PrivateMessage::getSendId, friendId)))
+                .ne(PrivateMessage::getStatus, MessageStatus.RECALL.code()).orderByDesc(PrivateMessage::getId)
+                .last("limit " + stIdx + "," + size);
 
         List<PrivateMessage> messages = this.list(wrapper);
         List<PrivateMessageVO> messageInfos =
-            messages.stream().map(m -> BeanUtils.copyProperties(m, PrivateMessageVO.class))
-                .collect(Collectors.toList());
+                messages.stream().map(m -> BeanUtils.copyProperties(m, PrivateMessageVO.class))
+                        .collect(Collectors.toList());
         log.info("拉取聊天记录，用户id:{},好友id:{}，数量:{}", userId, friendId, messageInfos.size());
         return messageInfos;
     }
@@ -161,9 +165,15 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         wrapper.gt(PrivateMessage::getId, minId);
         wrapper.ge(PrivateMessage::getSendTime, minDate);
         wrapper.and(wp -> wp.eq(PrivateMessage::getSendId, session.getUserId()).or()
-            .eq(PrivateMessage::getRecvId, session.getUserId()));
+                .eq(PrivateMessage::getRecvId, session.getUserId()));
         wrapper.orderByAsc(PrivateMessage::getId);
         List<PrivateMessage> messages = this.list(wrapper);
+        messages.forEach(m -> {
+            if (Objects.equals(m.getStatus(), MessageStatus.UNSEND.code())) {
+                m.setStatus(MessageStatus.SENDED.code());
+                this.updateById(m);
+            }
+        });
         // 推送消息
         for (PrivateMessage m : messages) {
             PrivateMessageVO vo = BeanUtils.copyProperties(m, PrivateMessageVO.class);
@@ -211,8 +221,8 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         // 修改消息状态为已读
         LambdaUpdateWrapper<PrivateMessage> updateWrapper = Wrappers.lambdaUpdate();
         updateWrapper.eq(PrivateMessage::getSendId, friendId).eq(PrivateMessage::getRecvId, session.getUserId())
-            .eq(PrivateMessage::getStatus, MessageStatus.SENDED.code())
-            .set(PrivateMessage::getStatus, MessageStatus.READED.code());
+                .eq(PrivateMessage::getStatus, MessageStatus.SENDED.code())
+                .set(PrivateMessage::getStatus, MessageStatus.READED.code());
         this.update(updateWrapper);
         log.info("消息已读，接收方id:{},发送方id:{}", session.getUserId(), friendId);
     }
@@ -222,8 +232,8 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         UserSession session = SessionContext.getSession();
         LambdaQueryWrapper<PrivateMessage> wrapper = Wrappers.lambdaQuery();
         wrapper.eq(PrivateMessage::getSendId, session.getUserId()).eq(PrivateMessage::getRecvId, friendId)
-            .eq(PrivateMessage::getStatus, MessageStatus.READED.code()).orderByDesc(PrivateMessage::getId)
-            .select(PrivateMessage::getId).last("limit 1");
+                .eq(PrivateMessage::getStatus, MessageStatus.READED.code()).orderByDesc(PrivateMessage::getId)
+                .select(PrivateMessage::getId).last("limit 1");
         PrivateMessage message = this.getOne(wrapper);
         if (Objects.isNull(message)) {
             return -1L;
@@ -234,9 +244,9 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
     @Override
     public ListResultVO<PrivateMessageVO> findSensitiveWordHit(PageQueryDTO dto) {
         LambdaQueryWrapper<PrivateMessage> wrapper = Wrappers.lambdaQuery();
-        List<PrivateMessage> privateMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),wrapper.eq(PrivateMessage::getType,5)).getRecords();
+        List<PrivateMessage> privateMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper.eq(PrivateMessage::getType, 5)).getRecords();
         ListResultVO<PrivateMessageVO> vo = new ListResultVO<>();
-        vo.setList(privateMessages.stream().map(privateMessage -> BeanUtils.copyProperties(privateMessage,PrivateMessageVO.class)).toList());
+        vo.setList(privateMessages.stream().map(privateMessage -> BeanUtils.copyProperties(privateMessage, PrivateMessageVO.class)).toList());
         vo.setTotal(this.count(wrapper));
         return vo;
     }
@@ -244,9 +254,9 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
     @Override
     public ListResultVO<PrivateMessageVO> findMessageList(PageQueryDTO dto) {
         LambdaQueryWrapper<PrivateMessage> wrapper = Wrappers.lambdaQuery();
-        List<PrivateMessage> privateMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),wrapper).getRecords();
+        List<PrivateMessage> privateMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper).getRecords();
         ListResultVO<PrivateMessageVO> vo = new ListResultVO<>();
-        vo.setList(privateMessages.stream().map(privateMessage -> BeanUtils.copyProperties(privateMessage,PrivateMessageVO.class)).toList());
+        vo.setList(privateMessages.stream().map(privateMessage -> BeanUtils.copyProperties(privateMessage, PrivateMessageVO.class)).toList());
         vo.setTotal(this.count(wrapper));
         return vo;
     }

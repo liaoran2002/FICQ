@@ -12,8 +12,6 @@ import lombok.AllArgsConstructor;
  * 50-60: 后台操作类消息: 用户封禁、群组封禁等
  * 80-89: 好友变化消息
  * 90-99: 群聊变化消息
- * 100-199: 单人语音通话rtc信令
- * 200-299: 多人语音通话rtc信令
  *
  */
 @AllArgsConstructor

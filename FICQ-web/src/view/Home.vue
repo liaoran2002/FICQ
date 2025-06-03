@@ -53,8 +53,8 @@
 				@close="$store.commit('closeUserInfoBox')"></user-info>
 			<full-image :visible="uiStore.fullImage.show" :url="uiStore.fullImage.url"
 				@close="$store.commit('closeFullImageBox')"></full-image>
-			<rtc-private-video ref="rtcPrivateVideo"></rtc-private-video>
-			<rtc-group-video ref="rtcGroupVideo"></rtc-group-video>
+			<full-video :visible="uiStore.fullVideo.show" :url="uiStore.fullVideo.url"
+				@close="$store.commit('closeFullVideoBox')"></full-video>
 		</div>
 	</div>
 </template>
@@ -64,9 +64,7 @@ import HeadImage from '../components/common/HeadImage.vue';
 import Setting from '../components/setting/Setting.vue';
 import UserInfo from '../components/common/UserInfo.vue';
 import FullImage from '../components/common/FullImage.vue';
-import RtcPrivateVideo from '../components/rtc/RtcPrivateVideo.vue';
-import RtcPrivateAcceptor from '../components/rtc/RtcPrivateAcceptor.vue';
-import RtcGroupVideo from '../components/rtc/RtcGroupVideo.vue';
+import FullVideo from '../components/common/FullVideo.vue';
 
 export default {
 	components: {
@@ -74,9 +72,7 @@ export default {
 		Setting,
 		UserInfo,
 		FullImage,
-		RtcPrivateVideo,
-		RtcPrivateAcceptor,
-		RtcGroupVideo
+		FullVideo
 	},
 	data() {
 		return {
@@ -225,11 +221,6 @@ export default {
 				this.$store.commit("removeFriend", friendId);
 				return;
 			}
-			// 单人webrtc 信令
-			if (this.$msgType.isRtcPrivate(msg.type)) {
-				this.$refs.rtcPrivateVideo.onRTCMessage(msg)
-				return;
-			}
 			// 插入消息
 			if (this.$msgType.isNormal(msg.type) || this.$msgType.isTip(msg.type) || this.$msgType.isAction(msg.type)) {
 				let friend = this.loadFriendInfo(friendId);
@@ -297,13 +288,6 @@ export default {
 			if (msg.type == this.$enums.MESSAGE_TYPE.GROUP_DEL) {
 				console.log("this.$enums.MESSAGE_TYPE.GROUP_DE")
 				this.$store.commit("removeGroup", msg.groupId);
-				return;
-			}
-			// 群视频信令
-			if (this.$msgType.isRtcGroup(msg.type)) {
-				this.$nextTick(() => {
-					this.$refs.rtcGroupVideo.onRTCMessage(msg);
-				})
 				return;
 			}
 			// 插入群聊消息
@@ -445,7 +429,7 @@ export default {
 		height: 80vh;
 		display: flex;
 		min-height: 600px;
-		min-width: 970px;
+		min-width: 800px;
 		position: absolute;
 		border-radius: 4px;
 		overflow: hidden;

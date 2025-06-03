@@ -6,6 +6,8 @@
 </template>
 
 <script>
+import { Upload } from 'element-ui';
+
 export default {
 	name: "fileUpload",
 	data() {
@@ -49,22 +51,62 @@ export default {
 					background: 'rgba(0, 0, 0, 0.7)'
 				});
 			}
-			let formData = new FormData()
-			formData.append('file', file.file)
-			this.$http({
-				url: this.action,
-				data: formData,
-				method: 'post',
-				headers: {
-					'Content-Type': 'multipart/form-data'
-				}
-			}).then((data) => {
-				this.$emit("success", data, file.file);
-			}).catch((e) => {
-				this.$emit("fail", e, file.file);
-			}).finally(() => {
-				this.loading && this.loading.close();
-			})
+			let formData = new FormData();
+			const upload = () => {
+				this.$http({
+					url: this.action,
+					data: formData,
+					method: 'post',
+					headers: {
+						'Content-Type': 'multipart/form-data'
+					}
+				}).then((data) => {
+					this.$emit("success", data, file.file);
+				}).catch((e) => {
+					this.$emit("fail", e, file.file);
+				}).finally(() => {
+					this.loading && this.loading.close();
+				})
+			}
+			if (this.action.startsWith('/video')) {
+				formData.append('videoFile', file.file)
+				const processVideo = async () => {
+					return new Promise((resolve, reject) => {
+						const video = document.createElement('video');
+						video.preload = 'metadata';
+						video.onloadedmetadata = () => {
+							// 跳转到视频中间位置
+							video.currentTime = Math.min(1, video.duration / 2);
+						};
+						video.oncanplay = () => {
+							video.play().then(() => {
+								setTimeout(() => {
+									video.pause();
+									const canvas = document.createElement('canvas');
+									canvas.width = video.videoWidth || 320;
+									canvas.height = video.videoHeight || 240;
+									canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+									canvas.toBlob(blob => {
+										if (!blob) reject(new Error('生成缩略图失败'));
+										formData.append('imageFile', blob, 'thumbnail.jpg');
+										resolve();
+									}, 'image/jpeg', 0.8);
+									video.remove(); // 清理资源 
+								}, Math.min(1, video.duration / 1000));
+							})
+						};
+						video.onerror = reject;
+						video.src = URL.createObjectURL(file.file);
+						video.load();
+					});
+				};
+				processVideo().then(() => {
+					upload();
+				})
+			} else {
+				formData.append('file', file.file)
+				upload();
+			}
 		},
 		beforeUpload(file) {
 			// 校验文件类型

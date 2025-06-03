@@ -73,20 +73,20 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
         GroupMessage msg = BeanUtils.copyProperties(dto, GroupMessage.class);
         if (msg != null) {
             msg.setSendId(session.getUserId());
-
-        msg.setSendTime(new Date());
-        msg.setSendNickName(member.getShowNickName());
-        msg.setAtUserIds(CommaTextUtils.asText(dto.getAtUserIds()));
-        // 过滤内容中的敏感词
-        if(MessageType.TEXT.code().equals(dto.getType())){
-            Map.Entry<String, Boolean> stringBooleanEntry = sensitiveFilterUtil.filter(dto.getContent());
-            msg.setContent(stringBooleanEntry.getKey());
-            if (stringBooleanEntry.getValue()) {
-                msg.setType(MessageType.SENTEXT.code());
+            msg.setStatus(MessageStatus.SENDED.code());
+            msg.setSendTime(new Date());
+            msg.setSendNickName(member.getShowNickName());
+            msg.setAtUserIds(CommaTextUtils.asText(dto.getAtUserIds()));
+            // 过滤内容中的敏感词
+            if (MessageType.TEXT.code().equals(dto.getType())) {
+                Map.Entry<String, Boolean> stringBooleanEntry = sensitiveFilterUtil.filter(dto.getContent());
+                msg.setContent(stringBooleanEntry.getKey());
+                if (stringBooleanEntry.getValue()) {
+                    msg.setType(MessageType.SENTEXT.code());
+                }
             }
+            this.save(msg);
         }
-        this.save(msg);
-    }
         // 群发
         GroupMessageVO msgInfo = BeanUtils.copyProperties(msg, GroupMessageVO.class);
         if (msgInfo != null) {
@@ -150,14 +150,14 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
     @Override
     public void pullOfflineMessage(Long minId) {
         UserSession session = SessionContext.getSession();
-        if(!webSocketMessageService.isOnline(session.getUserId())){
+        if (!webSocketMessageService.isOnline(session.getUserId())) {
             throw new GlobalException("网络连接失败，无法拉取离线消息");
         }
         // 查询用户加入的群组
         List<GroupMember> members = groupMemberService.findByUserId(session.getUserId());
         Map<Long, GroupMember> groupMemberMap = CollStreamUtil.toIdentityMap(members, GroupMember::getGroupId);
         Set<Long> groupIds = groupMemberMap.keySet();
-        if(CollectionUtil.isEmpty(groupIds)){
+        if (CollectionUtil.isEmpty(groupIds)) {
             // 关闭加载中标志
             this.sendLoadingMessage(false);
             return;
@@ -169,37 +169,37 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
         Date minDate = DateUtils.addMonths(new Date(), -months);
         LambdaQueryWrapper<GroupMessage> wrapper = Wrappers.lambdaQuery();
         wrapper.gt(GroupMessage::getId, minId)
-            .gt(GroupMessage::getSendTime, minDate)
-            .in(GroupMessage::getGroupId, groupIds)
-            .orderByAsc(GroupMessage::getId);
+                .gt(GroupMessage::getSendTime, minDate)
+                .in(GroupMessage::getGroupId, groupIds)
+                .orderByAsc(GroupMessage::getId);
         List<GroupMessage> messages = this.list(wrapper);
         // 通过群聊对消息进行分组
         Map<Long, List<GroupMessage>> messageGroupMap = messages.stream().collect(Collectors.groupingBy(GroupMessage::getGroupId));
         // 退群前的消息
         List<GroupMember> quitMembers = groupMemberService.findQuitInMonth(session.getUserId());
-        for(GroupMember quitMember: quitMembers){
+        for (GroupMember quitMember : quitMembers) {
             wrapper = Wrappers.lambdaQuery();
             wrapper.gt(GroupMessage::getId, minId)
-                .between(GroupMessage::getSendTime, minDate,quitMember.getQuitTime())
-                .eq(GroupMessage::getGroupId, quitMember.getGroupId())
-                .ne(GroupMessage::getStatus, MessageStatus.RECALL.code())
-                .orderByAsc(GroupMessage::getId);
+                    .between(GroupMessage::getSendTime, minDate, quitMember.getQuitTime())
+                    .eq(GroupMessage::getGroupId, quitMember.getGroupId())
+                    .ne(GroupMessage::getStatus, MessageStatus.RECALL.code())
+                    .orderByAsc(GroupMessage::getId);
             List<GroupMessage> groupMessages = this.list(wrapper);
-            messageGroupMap.put(quitMember.getGroupId(),groupMessages);
-            groupMemberMap.put(quitMember.getGroupId(),quitMember);
+            messageGroupMap.put(quitMember.getGroupId(), groupMessages);
+            groupMemberMap.put(quitMember.getGroupId(), quitMember);
         }
         // 推送消息
         AtomicInteger sendCount = new AtomicInteger();
         messageGroupMap.forEach((groupId, groupMessages) -> {
-            for(GroupMessage m:groupMessages){
+            for (GroupMessage m : groupMessages) {
                 // 排除加群之前的消息
                 GroupMember member = groupMemberMap.get(m.getGroupId());
-                if(DateUtil.compare(member.getCreatedTime(), m.getSendTime()) > 0){
+                if (DateUtil.compare(member.getCreatedTime(), m.getSendTime()) > 0) {
                     continue;
                 }
                 // 排除不需要接收的消息
                 List<String> recvIds = CommaTextUtils.asList(m.getRecvIds());
-                if(!recvIds.isEmpty() && !recvIds.contains(session.getUserId().toString())){
+                if (!recvIds.isEmpty() && !recvIds.contains(session.getUserId().toString())) {
                     continue;
                 }
                 // 组装vo
@@ -227,7 +227,7 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
         });
         // 关闭加载中标志
         this.sendLoadingMessage(false);
-        log.info("拉取离线群聊消息,用户id:{},数量:{}",session.getUserId(),sendCount.get());
+        log.info("拉取离线群聊消息,用户id:{},数量:{}", session.getUserId(), sendCount.get());
     }
 
     @Override
@@ -303,9 +303,9 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
     @Override
     public ListResultVO<GroupMessageVO> findMessageList(PageQueryDTO dto) {
         LambdaQueryWrapper<GroupMessage> wrapper = Wrappers.lambdaQuery();
-        List<GroupMessage> groupMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),wrapper).getRecords();
+        List<GroupMessage> groupMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper).getRecords();
         ListResultVO<GroupMessageVO> vo = new ListResultVO<>();
-        vo.setList(groupMessages.stream().map(groupMessage -> BeanUtils.copyProperties(groupMessage,GroupMessageVO.class)).toList());
+        vo.setList(groupMessages.stream().map(groupMessage -> BeanUtils.copyProperties(groupMessage, GroupMessageVO.class)).toList());
         vo.setTotal(this.count(wrapper));
         return vo;
     }
@@ -313,9 +313,9 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
     @Override
     public ListResultVO<GroupMessageVO> findSensitiveWordHit(PageQueryDTO dto) {
         LambdaQueryWrapper<GroupMessage> wrapper = Wrappers.lambdaQuery();
-        List<GroupMessage> groupMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()),wrapper.eq(GroupMessage::getType,5)).getRecords();
+        List<GroupMessage> groupMessages = this.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper.eq(GroupMessage::getType, 5)).getRecords();
         ListResultVO<GroupMessageVO> vo = new ListResultVO<>();
-        vo.setList(groupMessages.stream().map(groupMessage -> BeanUtils.copyProperties(groupMessage,GroupMessageVO.class)).toList());
+        vo.setList(groupMessages.stream().map(groupMessage -> BeanUtils.copyProperties(groupMessage, GroupMessageVO.class)).toList());
         vo.setTotal(this.count(wrapper));
         return vo;
     }
@@ -335,7 +335,7 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
     }
     */
 
-    private void sendLoadingMessage(Boolean isLoadding){
+    private void sendLoadingMessage(Boolean isLoadding) {
         UserSession session = SessionContext.getSession();
         GroupMessageVO msgInfo = new GroupMessageVO();
         msgInfo.setType(MessageType.LOADING.code());
@@ -349,5 +349,5 @@ public class GroupMessageServiceImpl extends ServiceImpl<GroupMessageMapper, Gro
         sendMessage.setSendResult(false);
         webSocketMessageService.sendGroupMessage(sendMessage);
     }
-    
+
 }

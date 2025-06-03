@@ -11,6 +11,10 @@ export default {
 		fullImage: { // 全屏大图
 			show: false,
 			url: ""
+		},
+		fullVideo: { // 全屏视频
+			show: false,
+			url: ""
 		}
 	},
 	mutations: {
@@ -34,6 +38,13 @@ export default {
 		},
 		closeFullImageBox(state) {
 			state.fullImage.show = false;
+		},
+		showFullVideoBox(state, url) {
+			state.fullVideo.show = true;
+			state.fullVideo.url = url;
+		},
+		closeFullVideoBox(state) {
+			state.fullVideo.show = false;
 		}
 	}
 }

@@ -11,6 +11,7 @@ import org.lc.ficq.session.SessionContext;
 import org.lc.ficq.util.FileUtil;
 import org.lc.ficq.util.ImageUtil;
 import org.lc.ficq.vo.UploadImageVO;
+import org.lc.ficq.vo.UploadVideoVO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -78,19 +79,16 @@ public class FileService {
             Long userId = SessionContext.getSession().getUserId();
             // Size validation
             if (file.getSize() > Constant.MAX_IMAGE_SIZE) {
-                throw new GlobalException(ResultCode.PROGRAM_ERROR, "图片大小不能超过20M");
+                throw new GlobalException(ResultCode.PROGRAM_ERROR, "图片大小不能超过5M");
             }
+            String originalFilename = file.getOriginalFilename();
             // Image format validation
-            if (!FileUtil.isImage(file.getOriginalFilename())) {
+            if (!FileUtil.isImage(originalFilename) || originalFilename == null) {
                 throw new GlobalException(ResultCode.PROGRAM_ERROR, "图片格式不合法");
             }
             // Generate unique filename
-            String originalFilename = file.getOriginalFilename();
-            String fileExtension = null;
-            if (originalFilename != null) {
-                fileExtension = FileUtil.getFileExtension(originalFilename);
-            }
-            String uniqueFileName = UUID.randomUUID() + (fileExtension != null ? "." + fileExtension : "");
+            String fileExtension =  FileUtil.getFileExtension(originalFilename);
+            String uniqueFileName = UUID.randomUUID() + "." + fileExtension;
             UploadImageVO vo = new UploadImageVO();
             // Save original image
             Path imagePath = Paths.get(baseUploadDir, "images", uniqueFileName);
@@ -114,6 +112,40 @@ public class FileService {
         }
     }
 
+    public UploadVideoVO uploadVideo(MultipartFile videoFile, MultipartFile imageFile) {
+        try {
+            Long userId = SessionContext.getSession().getUserId();
+            // Size validation
+            if (videoFile.getSize() > Constant.MAX_FILE_SIZE) {
+                throw new GlobalException(ResultCode.PROGRAM_ERROR, "视频大小不能超过20M");
+            }
+            String videoFileOriginalFilename = videoFile.getOriginalFilename();
+            // Image format validation
+            if (!FileUtil.isVideo(videoFileOriginalFilename) || videoFileOriginalFilename == null) {
+                throw new GlobalException(ResultCode.PROGRAM_ERROR, "视频格式不合法");
+            }
+            String imageFileOriginalFilename = imageFile.getOriginalFilename();
+            if (!FileUtil.isImage(imageFileOriginalFilename) || imageFileOriginalFilename == null) {
+                throw new GlobalException(ResultCode.PROGRAM_ERROR, "图片格式不合法");
+            }
+            String uniqueFileName = UUID.randomUUID()+".";
+            UploadVideoVO vo = new UploadVideoVO();
+            String uniqueVideoFileName = uniqueFileName+FileUtil.getFileExtension(videoFileOriginalFilename);
+            Path videoPath = Paths.get(baseUploadDir, "videos", uniqueVideoFileName);
+            videoFile.transferTo(videoPath);
+            vo.setOriginUrl(generUrl(FileType.VIDEO, uniqueVideoFileName));
+            byte[] videoByte = ImageUtil.compressForScale(imageFile.getBytes(), 30);
+            String thumbFileName = "thumb_" + uniqueFileName+FileUtil.getFileExtension(imageFileOriginalFilename);
+            Path thumbPath = Paths.get(baseUploadDir, "images", thumbFileName);
+            Files.write(thumbPath, videoByte);
+            vo.setThumbUrl(generUrl(FileType.IMAGE, thumbFileName));
+            log.info("视频上传成功，用户id:{}, url:{}", userId, vo.getOriginUrl());
+            return vo;
+        }catch (Exception e) {
+            log.error("上传视频失败，{}", e.getMessage(), e);
+            throw new GlobalException(ResultCode.PROGRAM_ERROR, "视频上传失败");
+        }
+    }
 
     public String generUrl(FileType fileTypeEnum, String fileName) {
         String url = "";

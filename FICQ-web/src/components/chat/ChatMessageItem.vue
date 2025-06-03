@@ -32,6 +32,15 @@
 							<span title="发送失败" v-show="loadFail" @click="onSendFail"
 								class="send-fail el-icon-warning"></span>
 						</div>
+						<div class="chat-msg-video" v-if="msgInfo.type == $enums.MESSAGE_TYPE.VIDEO">
+							<div class="img-load-box" v-loading="loading" element-loading-text="上传中.."
+								element-loading-background="rgba(0, 0, 0, 0.4)">
+								<img class="send-image" :src="JSON.parse(msgInfo.content).thumbUrl"
+									@click="showFullVideoBox()" loading="lazy" />
+							</div>
+							<span title="发送失败" v-show="loadFail" @click="onSendFail"
+								class="send-fail el-icon-warning"></span>
+						</div>
 						<div class="chat-msg-file" v-if="msgInfo.type == $enums.MESSAGE_TYPE.FILE">
 							<div class="chat-file-box" v-loading="loading">
 								<div class="chat-file-info">
@@ -136,6 +145,12 @@ export default {
 			let imageUrl = JSON.parse(this.msgInfo.content).originUrl;
 			if (imageUrl) {
 				this.$store.commit('showFullImageBox', imageUrl);
+			}
+		},
+		showFullVideoBox() {
+			let videoUrl = JSON.parse(this.msgInfo.content).originUrl;
+			if (videoUrl) {
+				this.$store.commit('showFullVideoBox', videoUrl);
 			}
 		},
 		onPlayVoice() {

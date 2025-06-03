@@ -1,7 +1,7 @@
 <template>
 	<div class="full-image" v-show="visible" :before-close="onClose" :modal="true">
-		<div class="mask"></div>
 		<div class="image-box">
+            <div class="mask" @click="onClose"></div>
 			<img :src="url" />
 		</div>
 		<div class="close" @click="onClose"><i class="el-icon-close"></i></div>
